@@ -27,12 +27,9 @@ function onKey(event: KeyboardEvent) {
 
 <h1>hall of frames</h1>
 
-<Exhibit
-  quote={data.quote}
-  reactAction="/q/{data.quote.id}?/react"
-  idHref="/q/{data.quote.id}"
-/>
-
+<!-- The nav hangs above the exhibit: everything below it (stage aside, the
+     plaque especially) is variable-height, so up here is the one place the
+     doorframe can never move between pieces. -->
 <nav class="hall-nav" aria-label="Walk the hall">
   {#if data.prevId}
     <a href="/frames/{data.prevId}" aria-label="Previous piece">←</a>
@@ -46,6 +43,12 @@ function onKey(event: KeyboardEvent) {
     <span class="end">→</span>
   {/if}
 </nav>
+
+<Exhibit
+  quote={data.quote}
+  reactAction="/q/{data.quote.id}?/react"
+  idHref="/q/{data.quote.id}"
+/>
 
 <p class="back"><a href="/">← back to the museum</a></p>
 
@@ -62,7 +65,7 @@ function onKey(event: KeyboardEvent) {
     justify-content: center;
     align-items: center;
     gap: 1.25rem;
-    margin-top: 2rem;
+    margin-top: 1.25rem;
   }
   .hall-nav a,
   .hall-nav .end {
