@@ -1,0 +1,160 @@
+[
+  {
+    "name": "canonical rather than",
+    "text": "I'll inspect the actual logs rather than speculate about the cause.",
+    "expect": [
+      {
+        "variant": "rather_than",
+        "sentence": "I'll inspect the actual logs rather than speculate about the cause."
+      }
+    ]
+  },
+  {
+    "name": "sentence-initial rather than",
+    "text": "Rather than guessing, let me read the file first.",
+    "expect": [
+      {
+        "variant": "rather_than",
+        "sentence": "Rather than guessing, let me read the file first."
+      }
+    ]
+  },
+  {
+    "name": "canonical instead of",
+    "text": "I'll use the existing helper instead of reinventing it.",
+    "expect": [
+      {
+        "variant": "instead_of",
+        "sentence": "I'll use the existing helper instead of reinventing it."
+      }
+    ]
+  },
+  {
+    "name": "multiple sentences, one match",
+    "text": "The tests pass now. I fixed the root cause rather than papering over the symptom. Let me know if anything else fails.",
+    "expect": [
+      {
+        "variant": "rather_than",
+        "sentence": "I fixed the root cause rather than papering over the symptom."
+      }
+    ]
+  },
+  {
+    "name": "both variants in one text",
+    "text": "I'll edit the config directly rather than patching at runtime. Also, I used a map instead of a nested loop.",
+    "expect": [
+      {
+        "variant": "rather_than",
+        "sentence": "I'll edit the config directly rather than patching at runtime."
+      },
+      {
+        "variant": "instead_of",
+        "sentence": "Also, I used a map instead of a nested loop."
+      }
+    ]
+  },
+  {
+    "name": "phrase split across a line-wrap space",
+    "text": "I will verify the schema rather  than assume the columns exist.",
+    "expect": [
+      {
+        "variant": "rather_than",
+        "sentence": "I will verify the schema rather  than assume the columns exist."
+      }
+    ]
+  },
+  {
+    "name": "capitalized mid-sentence (agent enthusiasm)",
+    "text": "Let me actually run the tests Rather Than claiming they pass.",
+    "expect": [
+      {
+        "variant": "rather_than",
+        "sentence": "Let me actually run the tests Rather Than claiming they pass."
+      }
+    ]
+  },
+  {
+    "name": "match after a code fence",
+    "text": "```js\nconst x = 1\n```\nI kept the fix minimal rather than refactoring the whole module.",
+    "expect": [
+      {
+        "variant": "rather_than",
+        "sentence": "I kept the fix minimal rather than refactoring the whole module."
+      }
+    ]
+  },
+  {
+    "name": "canonical as opposed to",
+    "text": "I'll benchmark the real workload, as opposed to guessing.",
+    "expect": [
+      {
+        "variant": "as_opposed_to",
+        "sentence": "I'll benchmark the real workload, as opposed to guessing."
+      }
+    ]
+  },
+  {
+    "name": "canonical won't just",
+    "text": "I won't just describe the bug; I'll fix it.",
+    "expect": [
+      {
+        "variant": "wont_just",
+        "sentence": "I won't just describe the bug; I'll fix it."
+      }
+    ]
+  },
+  {
+    "name": "will not simply (formal vow)",
+    "text": "The patch will not simply mask the symptom.",
+    "expect": [
+      {
+        "variant": "wont_just",
+        "sentence": "The patch will not simply mask the symptom."
+      }
+    ]
+  },
+  {
+    "name": "curly apostrophe won't merely",
+    "text": "I won’t merely restart the service.",
+    "expect": [
+      {
+        "variant": "wont_just",
+        "sentence": "I won’t merely restart the service."
+      }
+    ]
+  },
+  {
+    "name": "canonical without merely",
+    "text": "Let me fix the race condition without merely adding a retry.",
+    "expect": [
+      {
+        "variant": "without_merely",
+        "sentence": "Let me fix the race condition without merely adding a retry."
+      }
+    ]
+  },
+  {
+    "name": "pivot and vow in one text",
+    "text": "I'll read the spec rather than skim it. I won't just trust the summary.",
+    "expect": [
+      {
+        "variant": "rather_than",
+        "sentence": "I'll read the spec rather than skim it."
+      },
+      {
+        "variant": "wont_just",
+        "sentence": "I won't just trust the summary."
+      }
+    ]
+  },
+  {
+    "name": "contractions on both sides no longer read as quotes",
+    "text": "It's better to test rather than assume, don't you think?",
+    "expect": [
+      {
+        "variant": "rather_than",
+        "sentence": "It's better to test rather than assume, don't you think?"
+      }
+    ]
+  }
+]

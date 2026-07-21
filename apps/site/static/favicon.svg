@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- A specimen, framed: the transcript dot inside the museum's corner
+       glyphs — the mark plaqued pieces wear across the site. -->
+  <title>ratherthan.ai</title>
+  <rect width="100" height="100" rx="22" fill="#161b22" stroke="#2d333b" stroke-width="3"/>
+  <g stroke="#8b949e" stroke-width="6" fill="none" stroke-linecap="square">
+    <path d="M21 39 V21 H39"/>
+    <path d="M61 21 H79 V39"/>
+    <path d="M79 61 V79 H61"/>
+    <path d="M39 79 H21 V61"/>
+  </g>
+  <circle cx="50" cy="50" r="13" fill="#7ee787"/>
+</svg>

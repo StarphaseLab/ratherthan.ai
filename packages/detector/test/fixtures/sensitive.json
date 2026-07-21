@@ -1,0 +1,72 @@
+[
+  {
+    "name": "plain safe sentence",
+    "text": "I'll inspect the actual logs rather than speculate.",
+    "reasons": []
+  },
+  {
+    "name": "contains a URL",
+    "text": "I'll fetch https://internal.acme.dev/build rather than guess the status.",
+    "reasons": ["url"]
+  },
+  {
+    "name": "contains an email",
+    "text": "I'll ask a.curator@example.museum directly rather than assume.",
+    "reasons": ["email"]
+  },
+  {
+    "name": "contains a unix path",
+    "text": "I'll edit /home/curator/projects/secret/config.yml rather than the copy.",
+    "reasons": ["file_path"]
+  },
+  {
+    "name": "contains a windows path",
+    "text": "I'll read C:\\Users\\curator\\secrets.txt rather than the sample file.",
+    "reasons": ["file_path"]
+  },
+  {
+    "name": "contains inline code",
+    "text": "I'll call `deploy()` rather than the legacy script.",
+    "reasons": ["code"]
+  },
+  {
+    "name": "contains a token-shaped string",
+    "text": "I'll rotate the key faketoken_4kD9mQx7Lp4Vn8Rt2w rather than reuse it.",
+    "reasons": ["token_like"]
+  },
+  {
+    "name": "contains an IP address",
+    "text": "I'll probe 192.168.1.44 rather than the whole subnet.",
+    "reasons": ["ip_address"]
+  },
+  {
+    "name": "multiple reasons at once",
+    "text": "I'll POST to https://api.acme.dev/v1 with {retries: 3} rather than defaults.",
+    "reasons": ["url", "code"]
+  },
+  {
+    "name": "semicolon in prose is not code — it is the vow family's native punctuation",
+    "text": "I won't just flip the switch tonight; I'll walk the DEPLOY.md runbook end to end before the domain answers a single request.",
+    "reasons": []
+  },
+  {
+    "name": "braces still read as code even in a fluent sentence",
+    "text": "I'll pass {retries: 3} rather than the default config.",
+    "reasons": ["code"]
+  },
+  {
+    "name": "bare relative path with extension is flagged",
+    "text": "I'll edit src/index.ts rather than the generated copy.",
+    "reasons": ["file_path"]
+  },
+  {
+    "name": "prose slash without extension is not a path",
+    "text": "I'll support TCP/IP and/or QUIC rather than guessing.",
+    "reasons": []
+  },
+  {
+    "name": "impossible octets are not an IP address",
+    "text": "I'll bump it to 999.999.999.999 rather than guess.",
+    "reasons": []
+  }
+]

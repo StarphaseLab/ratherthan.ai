@@ -1,0 +1,36 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ratherthan",
+  "main": ".svelte-kit/cloudflare/_worker.js",
+  "compatibility_date": "2026-07-01",
+  "compatibility_flags": ["nodejs_compat"],
+  // Never expose the worker on *.workers.dev: Cloudflare Access only fronts
+  // the custom domain, so the admin header check must not be reachable
+  // anywhere Access isn't. Production traffic comes via the custom domain.
+  "workers_dev": false,
+  "routes": [{ "pattern": "ratherthan.ai", "custom_domain": true }],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": ".svelte-kit/cloudflare"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "ratherthan",
+      "database_id": "dc7bf422-9502-4f66-bdb6-c69a48144149",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "RATE",
+      "id": "fa5662008b774883a7520bd26ae53d43"
+    }
+  ],
+  "vars": {
+    // Fail-safe default: a deploy that forgets everything else still refuses
+    // admin requests without a Cloudflare Access identity. Local dev opts out
+    // via .dev.vars (committed; contains no secrets).
+    "REQUIRE_ACCESS": "true"
+  }
+}

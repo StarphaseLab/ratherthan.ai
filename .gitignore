@@ -1,0 +1,18 @@
+node_modules/
+dist/
+.svelte-kit/
+.wrangler/
+*.log
+.DS_Store
+.env
+.env.*
+!.env.example
+# transcript-derived content stays local until curated
+apps/site/wild-import.sql
+apps/site/triage.sql
+
+# internal working docs: handoff plans, notes, drafts — never published
+docs/
+
+# Claude Code harness state (was in .git/info/exclude, which squashes lose)
+.claude/

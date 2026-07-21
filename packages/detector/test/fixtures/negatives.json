@@ -1,0 +1,46 @@
+[
+  {
+    "name": "phrase inside a fenced code block",
+    "text": "Here is the fix:\n```python\n# use a set rather than a list for lookups\nseen = set()\n```\nDone."
+  },
+  {
+    "name": "phrase inside inline code",
+    "text": "The docstring literally says `prefer bar() instead of foo()` so I left it."
+  },
+  {
+    "name": "phrase inside a markdown blockquote",
+    "text": "> We should use tabs rather than spaces, said the style guide."
+  },
+  {
+    "name": "phrase inside double quotes (citing someone)",
+    "text": "The reviewer wrote \"use composition rather than inheritance\" on the PR."
+  },
+  {
+    "name": "phrase inside curly quotes",
+    "text": "The paper argues that “models memorize instead of generalize” under these conditions."
+  },
+  {
+    "name": "rather without than",
+    "text": "This is rather difficult, and I would sooner start over."
+  },
+  {
+    "name": "instead without of, sentence-final",
+    "text": "The cache was stale, so I rebuilt it instead."
+  },
+  {
+    "name": "unrelated prose",
+    "text": "All tests pass and the build is green. Deploying now."
+  },
+  {
+    "name": "vow quoted from someone else",
+    "text": "The style guide says \"without merely repeating the prompt\" somewhere."
+  },
+  {
+    "name": "won't without the minimizer",
+    "text": "This won't work on Windows without the compatibility layer."
+  },
+  {
+    "name": "without alone is not a vow",
+    "text": "The build passes without warnings now."
+  }
+]

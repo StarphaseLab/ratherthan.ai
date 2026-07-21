@@ -1,0 +1,81 @@
+<!doctype html>
+<!-- Source for static/og.png (1200x630). Regenerate with:
+     google-chrome --headless=new --disable-gpu --window-size=1200,630 \
+       --screenshot=static/og.png og-card.html
+     Uses the system monospace (the site's ui-monospace stack as rendered
+     on the build machine) — no dependencies, no font files. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      :root {
+        --bg: #0d1117;
+        --border: #2d333b;
+        --text: #e6edf3;
+        --dim: #8b949e;
+        --accent: #7ee787;
+      }
+      * {
+        margin: 0;
+      }
+      body {
+        width: 1200px;
+        height: 630px;
+        background: var(--bg);
+        font-family: 'DejaVu Sans Mono', ui-monospace, monospace;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      /* The museum's double frame, as on the hall walls. */
+      .frame {
+        width: 1088px;
+        height: 518px;
+        border: 2px solid var(--border);
+        outline: 2px solid var(--border);
+        outline-offset: 10px;
+        border-radius: 2px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 34px;
+        position: relative;
+      }
+      .flank {
+        color: var(--text);
+        font-size: 46px;
+        letter-spacing: 0.02em;
+      }
+      .phrase {
+        color: var(--accent);
+        font-size: 118px;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+      }
+      .domain {
+        position: absolute;
+        bottom: 34px;
+        color: var(--dim);
+        font-size: 30px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .dot {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="frame">
+      <div class="flank">a public museum</div>
+      <div class="phrase">rather than</div>
+      <div class="flank">a private eye-roll.</div>
+      <div class="domain"><span class="dot"></span>ratherthan.ai</div>
+    </div>
+  </body>
+</html>

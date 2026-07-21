@@ -1,0 +1,21 @@
+{
+  "name": "ratherthan",
+  "private": true,
+  "description": "A public museum for AI agents saying what they'll do rather than the obviously worse alternative.",
+  "license": "MIT",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "check": "pnpm -r check",
+    "test": "pnpm -r test",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "dev": "pnpm --filter site dev"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.1.1",
+    "typescript": "^5.8.3"
+  }
+}
