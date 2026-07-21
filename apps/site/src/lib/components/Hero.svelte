@@ -11,6 +11,7 @@ import { attributionLabel } from '$lib/attribution.ts'
 import ReactionPills from '$lib/components/ReactionPills.svelte'
 import { isTypingTarget } from '$lib/keys.ts'
 import type { QuoteRow } from '$lib/server/quotes.ts'
+import { pickSizes, SIZES, sideShare } from '$lib/stage-fit.ts'
 
 let { quotes }: { quotes: QuoteRow[] } = $props()
 
@@ -53,6 +54,36 @@ const split = $derived.by(() => {
       right: '',
     }
   )
+})
+
+/* Every specimen of the current pool, pre-split, for the measuring twin. */
+const poolSplits = $derived(
+  pool.map((q) => {
+    const s = splitByVariant(q.text, variantId) ?? { left: q.text, phrase: phraseLabel, right: '' }
+    return { id: q.id, left: s.left, right: s.right }
+  }),
+)
+
+/* Fixed-frame typography (see $lib/stage-fit.ts): the phrase is the true
+   anchor and never moves; only a side that would overflow its share steps
+   down. The whole pool is measured up front so specimens enter at their
+   final size; re-measured on resize. */
+let stageEl: HTMLElement | undefined = $state()
+let anchorEl: HTMLElement | undefined = $state()
+let measureEl: HTMLElement | undefined = $state()
+let viewportWidth = $state(0)
+let fit: Record<string, { left: string; right: string }> = $state({})
+const currentFit = $derived(fit[current?.id ?? ''] ?? { left: '', right: '' })
+
+$effect(() => {
+  void poolSplits
+  void viewportWidth
+  if (!measureEl || !anchorEl || !stageEl) return
+  const share = sideShare(stageEl, anchorEl)
+  const next: Record<string, { left: string; right: string }> = {}
+  for (const item of measureEl.querySelectorAll<HTMLElement>('.m-item'))
+    next[item.dataset.id ?? ''] = pickSizes(item, share)
+  fit = next
 })
 
 function advance(dir: 1 | -1) {
@@ -156,7 +187,7 @@ function onKey(event: KeyboardEvent) {
 }
 </script>
 
-<svelte:window onkeydown={onKey} />
+<svelte:window onkeydown={onKey} onresize={() => (viewportWidth = window.innerWidth)} />
 <svelte:document onvisibilitychange={onVisibility} />
 
 {#if current}
@@ -169,11 +200,22 @@ function onKey(event: KeyboardEvent) {
       cycle += 1
     }}
   >
-    <div class="stage" class:on-the-wall={Boolean(current.plaque)}>
+    <div class="measure" bind:this={measureEl} aria-hidden="true">
+      {#each poolSplits as m (m.id)}
+        <div class="m-item" data-id={m.id}>
+          {#each SIZES as size (size)}
+            <span class="m-side {size}">{m.left}</span>
+            <span class="m-side {size}">{m.right}</span>
+          {/each}
+        </div>
+      {/each}
+    </div>
+
+    <div class="stage" bind:this={stageEl} class:on-the-wall={Boolean(current.plaque)}>
       <div class="side">
         {#key current.id}
           <span
-            class="fragment"
+            class="fragment {currentFit.left}"
             in:fly={{
               x: axis === 'x' ? 44 * direction : 0,
               y: axis === 'y' ? 30 * direction : 0,
@@ -189,7 +231,7 @@ function onKey(event: KeyboardEvent) {
         {/key}
       </div>
 
-      <div class="anchor" class:open={menuOpen}>
+      <div class="anchor" class:open={menuOpen} bind:this={anchorEl}>
         <div class="phrase-clip">
           {#key variantId}
             <button
@@ -217,7 +259,7 @@ function onKey(event: KeyboardEvent) {
       <div class="side">
         {#key current.id}
           <span
-            class="fragment"
+            class="fragment {currentFit.right}"
             in:fly={{
               x: axis === 'x' ? 44 * direction : 0,
               y: axis === 'y' ? 30 * direction : 0,
@@ -249,20 +291,22 @@ function onKey(event: KeyboardEvent) {
 
     <div class="caption">
       <span class="who">— {attributionLabel(current)}</span>
-      {#if current.plaque}
-        <a
-          class="permalink framed"
-          href="/frames/{current.id}"
-          title="A curator's plaque hangs beneath this piece — visit it in the hall"
-          >⌜ hall of frames ⌝</a
-        >
-      {:else}
-        <a class="permalink" href="/q/{current.id}">#{current.id}</a>
-      {/if}
-      <span class="family" title={FAMILIES[VARIANTS[variantId].family].description}>
-        {FAMILIES[VARIANTS[variantId].family].label}
+      <span class="meta">
+        {#if current.plaque}
+          <a
+            class="permalink framed"
+            href="/frames/{current.id}"
+            title="A curator's plaque hangs beneath this piece — visit it in the hall"
+            >⌜ hall of frames ⌝</a
+          >
+        {:else}
+          <a class="permalink" href="/q/{current.id}">#{current.id}</a>
+        {/if}
+        <span class="family" title={FAMILIES[VARIANTS[variantId].family].description}>
+          {FAMILIES[VARIANTS[variantId].family].label}
+        </span>
+        <span class="counter">{position + 1}/{pool.length}</span>
       </span>
-      <span class="counter">{position + 1}/{pool.length}</span>
     </div>
 
     <ReactionPills quote={current} action="/q/{current.id}?/react" />
@@ -367,6 +411,36 @@ function onKey(event: KeyboardEvent) {
     transition:
       opacity 0.6s ease 0.45s,
       transform 0.6s ease 0.45s;
+  }
+  /* Per-side shrink steps: only the side that would overflow its share of
+     the frame steps down, picked by measurement (script above). The class
+     rides on the fragment, not the side — a departing fragment must keep
+     the size it was measured at through its exit animation. */
+  .fragment.compact,
+  .m-side.compact {
+    font-size: clamp(1rem, 1.7vw, 1.4rem);
+  }
+  .fragment.dense,
+  .m-side.dense {
+    font-size: clamp(0.95rem, 1.5vw, 1.2rem);
+  }
+  /* The measuring twin: every pool fragment at final width, all three type
+     sizes, invisible and out of flow. Inset mirrors the hero's content
+     padding so wrapping matches the real stage exactly. */
+  .measure {
+    position: absolute;
+    inset: 0 max(1rem, calc(50vw - 36rem));
+    visibility: hidden;
+    pointer-events: none;
+    overflow: hidden;
+    font-size: clamp(1.1rem, 2vw, 1.65rem);
+    line-height: 1.45;
+  }
+  .m-side {
+    display: block;
+    max-width: 46rem;
+    margin-inline: auto;
+    text-wrap: balance;
   }
   .side {
     display: grid;
@@ -479,6 +553,14 @@ function onKey(event: KeyboardEvent) {
   .caption .who {
     white-space: nowrap;
   }
+  /* Catalog data (permalink, family, counter) travels as one unit: it may
+     move to its own line, but never breaks apart mid-trio. */
+  .caption .meta {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    white-space: nowrap;
+  }
   .caption a {
     color: var(--dim);
     text-decoration: none;
@@ -560,6 +642,12 @@ function onKey(event: KeyboardEvent) {
     }
     .caption .who {
       white-space: normal;
+    }
+    /* Always two lines on mobile — attribution, then catalog data — so the
+       caption's shape never depends on the model name's length. */
+    .caption .meta {
+      flex-basis: 100%;
+      justify-content: center;
     }
   }
 </style>
