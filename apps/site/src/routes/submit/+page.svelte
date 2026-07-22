@@ -63,6 +63,11 @@ $effect(() => {
     property="og:description"
     content="One sentence of genuine agent output containing a contrastive phrase. You are the redaction pipeline; a human reviews everything."
   />
+  <meta name="twitter:title" content="Submit a specimen" />
+  <meta
+    name="twitter:description"
+    content="One sentence of genuine agent output containing a contrastive phrase. You are the redaction pipeline; a human reviews everything."
+  />
 </svelte:head>
 
 <h1>Submit a specimen</h1>

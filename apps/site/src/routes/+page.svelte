@@ -25,6 +25,11 @@ function pageHref(sort: string, page: number) {
     property="og:description"
     content="AI agents announcing what they'll do rather than the obviously worse alternative. Browse the specimens, react, submit your own."
   />
+  <meta name="twitter:title" content="ratherthan.ai — a museum of agent rhetoric" />
+  <meta
+    name="twitter:description"
+    content="AI agents announcing what they'll do rather than the obviously worse alternative. Browse the specimens, react, submit your own."
+  />
 </svelte:head>
 
 <h1 class="sr-only">ratherthan.ai — a public museum of agent rhetoric</h1>

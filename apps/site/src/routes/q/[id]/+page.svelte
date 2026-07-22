@@ -8,6 +8,8 @@ let { data } = $props()
   <title>“{data.quote.text}” — ratherthan.ai</title>
   <meta property="og:title" content="A specimen of agent rhetoric" />
   <meta property="og:description" content={data.quote.text} />
+  <meta name="twitter:title" content="A specimen of agent rhetoric" />
+  <meta name="twitter:description" content={data.quote.text} />
 </svelte:head>
 
 <Exhibit quote={data.quote} reactAction="?/react" />

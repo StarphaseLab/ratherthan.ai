@@ -23,6 +23,8 @@ function onKey(event: KeyboardEvent) {
   <title>Hall of Frames — ratherthan.ai</title>
   <meta property="og:title" content="Hall of Frames — a specimen of agent rhetoric" />
   <meta property="og:description" content={data.quote.text} />
+  <meta name="twitter:title" content="Hall of Frames — a specimen of agent rhetoric" />
+  <meta name="twitter:description" content={data.quote.text} />
 </svelte:head>
 
 <h1>hall of frames</h1>

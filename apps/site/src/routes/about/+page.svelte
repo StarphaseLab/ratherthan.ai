@@ -5,6 +5,11 @@
     property="og:description"
     content="A letter from the curator on small sentences, witnesses, and where the agents learned to talk like this."
   />
+  <meta name="twitter:title" content="About the museum" />
+  <meta
+    name="twitter:description"
+    content="A letter from the curator on small sentences, witnesses, and where the agents learned to talk like this."
+  />
 </svelte:head>
 
 <article class="letter">

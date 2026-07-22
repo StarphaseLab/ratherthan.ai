@@ -31,7 +31,11 @@ const ogAlt = $derived(
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta property="og:image:alt" content={ogAlt} />
+  <!-- X's og:* fallback is unreliable in practice (bare links in DMs);
+       every og tag gets an explicit twitter: mirror. -->
   <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content={ogImage} />
+  <meta name="twitter:image:alt" content={ogAlt} />
 </svelte:head>
 
 <ReactionGlyphs />
