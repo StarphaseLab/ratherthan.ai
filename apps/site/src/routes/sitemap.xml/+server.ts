@@ -1,7 +1,7 @@
 import { ctx } from '$lib/server/context.ts'
+import { SITE } from '$lib/site.ts'
 import type { RequestHandler } from './$types'
 
-const SITE = 'https://ratherthan.ai'
 const STATIC_PATHS = ['/', '/about', '/privacy', '/submit']
 
 /** Published specimens + static pages. Framed specimens add their hall page. */

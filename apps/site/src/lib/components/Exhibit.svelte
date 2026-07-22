@@ -1,5 +1,6 @@
 <script lang="ts">
 import { attributionLabel } from '$lib/attribution.ts'
+import CopyLink from '$lib/components/CopyLink.svelte'
 import ReactionPills from '$lib/components/ReactionPills.svelte'
 import StagePreview from '$lib/components/StagePreview.svelte'
 import type { QuoteRow } from '$lib/server/quotes.ts'
@@ -7,9 +8,14 @@ import type { QuoteRow } from '$lib/server/quotes.ts'
 /* One specimen, hung: stage, attribution, reactions, and — when a curator
    has spoken — the double frame and the plaque. Shared by the permalink
    page and the hall; idHref turns the specimen id into a link when the
-   page showing it is not the permalink itself. */
-let { quote, reactAction, idHref }: { quote: QuoteRow; reactAction: string; idHref?: string } =
-  $props()
+   page showing it is not the permalink itself; copyPath is the path the
+   copy-link button hands out (the hall passes its own /frames permalink). */
+let {
+  quote,
+  reactAction,
+  idHref,
+  copyPath = `/q/${quote.id}`,
+}: { quote: QuoteRow; reactAction: string; idHref?: string; copyPath?: string } = $props()
 </script>
 
 <!-- The double frame is the hall's regalia: only plaqued specimens wear it. -->
@@ -19,7 +25,8 @@ let { quote, reactAction, idHref }: { quote: QuoteRow; reactAction: string; idHr
 
 <p class="label">
   — {attributionLabel(quote)} ·
-  {#if idHref}<a href={idHref}>#{quote.id}</a>{:else}#{quote.id}{/if}
+  {#if idHref}<a href={idHref}>#{quote.id}</a>{:else}#{quote.id}{/if} ·
+  <CopyLink path={copyPath} />
 </p>
 
 <ReactionPills {quote} action={reactAction} />

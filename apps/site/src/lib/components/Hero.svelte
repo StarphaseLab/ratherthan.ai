@@ -9,6 +9,7 @@ import {
 import { fly } from 'svelte/transition'
 import { attributionLabel } from '$lib/attribution.ts'
 import ReactionPills from '$lib/components/ReactionPills.svelte'
+import { CopyFeedback } from '$lib/copy-link.svelte.ts'
 import { isTypingTarget } from '$lib/keys.ts'
 import type { QuoteRow } from '$lib/server/quotes.ts'
 import { pickSizes, SIZES, sideShare } from '$lib/stage-fit.ts'
@@ -146,6 +147,8 @@ function shuffle() {
   variantId = target.variant
   menuOpen = false
 }
+
+const copyFeedback = new CopyFeedback()
 
 const AUTO_ADVANCE_MS = 10000
 
@@ -356,6 +359,24 @@ function onKey(event: KeyboardEvent) {
           aria-pressed={userPaused}
           onclick={togglePause}>{userPaused ? '▷' : '❚❚'}</button
         >
+        <button
+          class:copied={copyFeedback.copied}
+          aria-label="Copy link to this specimen"
+          title="Copy link to this specimen"
+          onclick={() => current && copyFeedback.copy(`/q/${current.id}`)}
+        >
+          {#if copyFeedback.copied}
+            <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 12.5 10 17.5 19 7" />
+            </svg>
+          {:else}
+            <!-- Two offset sheets: the duplicate/copy glyph, drawn to the die's stroke. -->
+            <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="8.5" y="8.5" width="11" height="11" rx="2.5" />
+              <path d="M15.5 5.5v-1a2 2 0 0 0-2-2h-8a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h1" />
+            </svg>
+          {/if}
+        </button>
       </div>
     </nav>
   </section>
@@ -624,6 +645,16 @@ function onKey(event: KeyboardEvent) {
     fill: currentColor;
     stroke: none;
   }
+  .glyph {
+    width: 17px;
+    height: 17px;
+    vertical-align: -3px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
   .specimen-nav button {
     background: none;
     color: var(--dim);
@@ -634,6 +665,11 @@ function onKey(event: KeyboardEvent) {
     font: inherit;
     font-size: 1.1rem;
     cursor: pointer;
+  }
+  /* A moment of accent confirms the copy; the check swaps in via {#if}. */
+  .specimen-nav button.copied {
+    color: var(--accent);
+    border-color: var(--accent);
   }
   .specimen-nav button:hover {
     color: var(--accent);

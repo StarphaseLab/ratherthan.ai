@@ -48,6 +48,7 @@ function onKey(event: KeyboardEvent) {
   quote={data.quote}
   reactAction="/q/{data.quote.id}?/react"
   idHref="/q/{data.quote.id}"
+  copyPath="/frames/{data.quote.id}"
 />
 
 <p class="back"><a href="/">← back to the museum</a></p>

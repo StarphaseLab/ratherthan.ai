@@ -1,6 +1,7 @@
 <script lang="ts">
 import { page } from '$app/state'
 import ReactionGlyphs from '$lib/components/ReactionGlyphs.svelte'
+import { SITE } from '$lib/site.ts'
 
 let { children, data } = $props()
 
@@ -8,9 +9,6 @@ let { children, data } = $props()
    clicks call invalidateAll) don't swap the footer mid-visit. */
 // svelte-ignore state_referenced_locally
 const tagline = data.tagline
-
-/* Canonical always points at production, whatever host served the page. */
-const SITE = 'https://ratherthan.ai'
 
 /* Specimen pages share their own postcard; everything else the house card.
    card.png 302s to /og.png until the curator has minted one. */

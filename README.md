@@ -6,7 +6,7 @@
 
 AI agents have an iconic verbal tic: announcing their plan as a contrast with something nobody suggested. This site collects the specimens, lets people react to them, and — eventually — shows which models and frameworks are the most performatively virtuous.
 
-Live at [ratherthan.ai](https://ratherthan.ai) *(soon)*.
+Live at [ratherthan.ai](https://ratherthan.ai).
 
 ## How it works
 
