@@ -11,7 +11,7 @@
 /**
  * Families group variants by rhetorical shape:
  *  - pivot: one phrase splitting the chosen path from the rejected one.
- *  - vow:   a first-person promise to exceed the bare minimum.
+ *  - vow:   a refusal of the bare minimum (won't just / without merely / not just).
  * Families are presentation metadata; the database only ever stores variant ids.
  */
 export type Family = 'pivot' | 'vow'
@@ -22,30 +22,73 @@ export type VariantId =
   | 'as_opposed_to'
   | 'wont_just'
   | 'without_merely'
+  | 'not_just'
 
 export const FAMILIES: Record<Family, { label: string; description: string }> = {
   pivot: { label: 'pivot', description: 'the chosen path, split from the rejected one' },
-  vow: { label: 'vow', description: 'a promise to exceed the bare minimum' },
+  vow: { label: 'vow', description: 'a refusal of the bare minimum' },
 }
+
+/* Every vow is a refusal built on the same minimizers; patterns share this
+   alternation so the accepted adverb set can never drift between variants. */
+const MINIMIZERS = '(?:just|merely|simply)'
+
+/**
+ * The ungated core of `not_just` — the phrase shape without the punctuation
+ * gate below. Exported so interfaces can recognize a near-miss (a bare
+ * mid-clause "not just") and explain the gate instead of appearing blind.
+ */
+export const NOT_JUST_CORE = new RegExp(`\\bnot\\s+${MINIMIZERS}\\b`, 'i')
 
 /**
  * Published detection rules — the single source of truth for the taxonomy.
  * Patterns are stored without flags; consumers derive fresh regexes from
  * `pattern.source`, so the stateful `g` flag never leaks between uses.
+ * `forms` lists every surface form a pattern accepts, canonical (label) first.
  */
-export const VARIANTS: Record<VariantId, { label: string; family: Family; pattern: RegExp }> = {
-  rather_than: { label: 'rather than', family: 'pivot', pattern: /\brather\s+than\b/i },
-  instead_of: { label: 'instead of', family: 'pivot', pattern: /\binstead\s+of\b/i },
-  as_opposed_to: { label: 'as opposed to', family: 'pivot', pattern: /\bas\s+opposed\s+to\b/i },
+export const VARIANTS: Record<
+  VariantId,
+  { label: string; family: Family; pattern: RegExp; forms: readonly string[] }
+> = {
+  rather_than: {
+    label: 'rather than',
+    family: 'pivot',
+    pattern: /\brather\s+than\b/i,
+    forms: ['rather than'],
+  },
+  instead_of: {
+    label: 'instead of',
+    family: 'pivot',
+    pattern: /\binstead\s+of\b/i,
+    forms: ['instead of'],
+  },
+  as_opposed_to: {
+    label: 'as opposed to',
+    family: 'pivot',
+    pattern: /\bas\s+opposed\s+to\b/i,
+    forms: ['as opposed to'],
+  },
   wont_just: {
     label: 'won’t just',
     family: 'vow',
-    pattern: /\b(?:won[’']t|will\s+not)\s+(?:just|merely|simply)\b/i,
+    pattern: new RegExp(`\\b(?:won[’']t|will\\s+not)\\s+${MINIMIZERS}\\b`, 'i'),
+    forms: ['won’t just', 'won’t merely', 'won’t simply'],
   },
   without_merely: {
     label: 'without merely',
     family: 'vow',
-    pattern: /\bwithout\s+(?:just|merely|simply)\b/i,
+    pattern: new RegExp(`\\bwithout\\s+${MINIMIZERS}\\b`, 'i'),
+    forms: ['without merely', 'without just', 'without simply'],
+  },
+  not_just: {
+    label: 'not just',
+    family: 'vow',
+    /* Punctuation-gated: bare "not just" saturates innocent English, so the
+       phrase only counts as a postfix dismissal when a dash or comma sets it
+       off. The gate lives in a lookbehind so the match — and therefore
+       splitByVariant's phrase — starts at "not", never at the dash. */
+    pattern: new RegExp(`(?<=[—–,-]\\s{0,3})${NOT_JUST_CORE.source}`, 'i'),
+    forms: ['not just', 'not merely', 'not simply'],
   },
 }
 
@@ -118,11 +161,19 @@ function isQuotedContext(sentence: string): boolean {
  * Matches inside code blocks, inline code, blockquotes, and quoted strings
  * are excluded — those are someone else's words or not words at all.
  */
+/* Compiled once, not per detect() call — the submit form runs detection on
+   every keystroke. Safe to share: matchAll iterates a per-call clone (spec),
+   so these instances' lastIndex is never advanced and detection stays
+   stateless. */
+const COMPILED: readonly (readonly [VariantId, RegExp])[] = VARIANT_IDS.map((id) => [
+  id,
+  new RegExp(VARIANTS[id].pattern.source, 'gi'),
+])
+
 export function detect(text: string): Match[] {
   const stripped = blankCode(text)
   const matches: Match[] = []
-  for (const id of VARIANT_IDS) {
-    const pattern = new RegExp(VARIANTS[id].pattern.source, 'gi')
+  for (const [id, pattern] of COMPILED) {
     for (const hit of stripped.matchAll(pattern)) {
       const sentence = sentenceAt(text, hit.index)
       if (isQuotedContext(sentence)) continue

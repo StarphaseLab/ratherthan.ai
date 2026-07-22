@@ -89,6 +89,14 @@ describe('splitByVariant', () => {
     expect(splitByVariant('I will read the logs.', 'rather_than')).toBeNull()
   })
 
+  it('keeps the gating punctuation out of the not_just phrase', () => {
+    expect(splitByVariant('proven at the apply path — not just the dry-run.', 'not_just')).toEqual({
+      left: 'proven at the apply path — ',
+      phrase: 'not just',
+      right: ' the dry-run.',
+    })
+  })
+
   it('anchors on the first occurrence when the phrase repeats', () => {
     const parts = splitByVariant('fix it rather than patch rather than ignore', 'rather_than')
     expect(parts?.left).toBe('fix it ')

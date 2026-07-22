@@ -86,6 +86,32 @@ $effect(() => {
   fit = next
 })
 
+/* Stage motion, defined once for every keyed fragment: sides travel with the
+   browse axis; the phrase flies only on variant switches and crossfades in
+   place (x: 0) within a pool. */
+const sideFly = $derived.by(() => ({
+  in: {
+    x: axis === 'x' ? 44 * direction : 0,
+    y: axis === 'y' ? 30 * direction : 0,
+    duration: 380,
+    delay: 100,
+  },
+  out: {
+    x: axis === 'x' ? -44 * direction : 0,
+    y: axis === 'y' ? -30 * direction : 0,
+    duration: 260,
+  },
+}))
+const phraseFly = $derived.by(() => ({
+  in: { x: axis === 'x' ? 30 * direction : 0, duration: 300, delay: 80 },
+  out: { x: axis === 'x' ? -30 * direction : 0, duration: 200 },
+}))
+
+/* Remount (and so animate) the phrase only when its rendered text changes —
+   not per specimen: hopping between two "not just" quotes keeps the anchor
+   perfectly still, while "not just" → "not merely" crossfades. */
+const phraseKey = $derived(`${variantId}:${split.phrase}`)
+
 function advance(dir: 1 | -1) {
   axis = 'y'
   direction = dir
@@ -214,33 +240,22 @@ function onKey(event: KeyboardEvent) {
     <div class="stage" bind:this={stageEl} class:on-the-wall={Boolean(current.plaque)}>
       <div class="side">
         {#key current.id}
-          <span
-            class="fragment {currentFit.left}"
-            in:fly={{
-              x: axis === 'x' ? 44 * direction : 0,
-              y: axis === 'y' ? 30 * direction : 0,
-              duration: 380,
-              delay: 100,
-            }}
-            out:fly={{
-              x: axis === 'x' ? -44 * direction : 0,
-              y: axis === 'y' ? -30 * direction : 0,
-              duration: 260,
-            }}>{split.left}</span
+          <span class="fragment {currentFit.left}" in:fly={sideFly.in} out:fly={sideFly.out}
+            >{split.left}</span
           >
         {/key}
       </div>
 
       <div class="anchor" class:open={menuOpen} bind:this={anchorEl}>
         <div class="phrase-clip">
-          {#key variantId}
+          {#key phraseKey}
             <button
               class="phrase"
               aria-haspopup={available.length > 1 ? 'menu' : undefined}
               aria-expanded={available.length > 1 ? menuOpen : undefined}
               title={available.length > 1 ? 'Switch phrase variant' : undefined}
-              in:fly={{ x: 30 * direction, duration: 300, delay: 80 }}
-              out:fly={{ x: -30 * direction, duration: 200 }}
+              in:fly={phraseFly.in}
+              out:fly={phraseFly.out}
               onclick={() => available.length > 1 && (menuOpen = !menuOpen)}>{split.phrase}</button
             >
           {/key}
@@ -258,36 +273,24 @@ function onKey(event: KeyboardEvent) {
 
       <div class="side">
         {#key current.id}
-          <span
-            class="fragment {currentFit.right}"
-            in:fly={{
-              x: axis === 'x' ? 44 * direction : 0,
-              y: axis === 'y' ? 30 * direction : 0,
-              duration: 380,
-              delay: 100,
-            }}
-            out:fly={{
-              x: axis === 'x' ? -44 * direction : 0,
-              y: axis === 'y' ? -30 * direction : 0,
-              duration: 260,
-            }}>{split.right}</span
+          <span class="fragment {currentFit.right}" in:fly={sideFly.in} out:fly={sideFly.out}
+            >{split.right}</span
           >
         {/key}
       </div>
     </div>
 
-    {#if pool.length > 1}
-      {#key `${variantId}:${index}:${cycle}`}
-        <div
-          class="timer"
-          class:paused={paused || userPaused}
-          style="--auto-advance: {AUTO_ADVANCE_MS}ms"
-          aria-hidden="true"
-        >
-          <i></i>
-        </div>
-      {/key}
-    {/if}
+    {#key `${variantId}:${index}:${cycle}`}
+      <div
+        class="timer"
+        class:idle={pool.length < 2}
+        class:paused={paused || userPaused}
+        style="--auto-advance: {AUTO_ADVANCE_MS}ms"
+        aria-hidden="true"
+      >
+        <i></i>
+      </div>
+    {/key}
 
     <div class="caption">
       <span class="who">— {attributionLabel(current)}</span>
@@ -530,6 +533,14 @@ function onKey(event: KeyboardEvent) {
   }
   .timer.paused > i {
     animation-play-state: paused;
+  }
+  /* A one-specimen pool has no rotation to count down, but the bar still
+     holds its slot — the caption below must not jump between pools. */
+  .timer.idle {
+    visibility: hidden;
+  }
+  .timer.idle > i {
+    animation: none;
   }
   @keyframes timer-fill {
     from {

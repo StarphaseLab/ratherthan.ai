@@ -1,5 +1,12 @@
 <script lang="ts">
-import { detect, FAMILIES, sensitiveReasons, VARIANT_IDS, VARIANTS } from '@ratherthan/detector'
+import {
+  detect,
+  FAMILIES,
+  NOT_JUST_CORE,
+  sensitiveReasons,
+  VARIANT_IDS,
+  VARIANTS,
+} from '@ratherthan/detector'
 import { enhance } from '$app/forms'
 import { MAX_LABEL_LENGTH, MAX_TEXT_LENGTH } from '$lib/limits.ts'
 
@@ -14,14 +21,23 @@ let text = $state(form?.input?.text ?? '')
 // svelte-ignore state_referenced_locally -- one-time seed of the draft from any echoed input
 let variant = $state<string>(form?.input?.variant ?? 'auto')
 
-const detected = $derived(
-  text.trim().length > 0 ? [...new Set(detect(text).map((m) => m.variant))] : [],
-)
-const unrecognized = $derived(text.trim().length > 0 && detected.length === 0)
+const hasText = $derived(text.trim().length > 0)
+const matches = $derived(hasText ? detect(text) : [])
+const detected = $derived([...new Set(matches.map((m) => m.variant))])
+const unrecognized = $derived(hasText && detected.length === 0)
+
+/* The submitter only gets a real choice when several phrases match and one
+   must be picked to anchor the exhibit; otherwise the picker is a readout. */
+const choiceRequired = $derived(detected.length > 1)
+
+/* The not_just punctuation gate is invisible while typing — a bare "not just"
+   is deliberately ignored (innocent English) until a dash or comma sets it
+   off. Surface that instead of letting the type-along feel dead. */
+const almostGated = $derived(unrecognized && NOT_JUST_CORE.test(text))
 
 /* Same screen the server enforces, run before anything is sent — flagged
    text never has to leave the machine at all. */
-const flagged = $derived(text.trim().length > 0 ? sensitiveReasons(text) : [])
+const flagged = $derived(hasText ? sensitiveReasons(text) : [])
 const REASON_LABELS: Record<string, string> = {
   url: 'a URL',
   email: 'an email address',
@@ -102,22 +118,37 @@ $effect(() => {
         {#if flagged.length > 0}
           looks private ({flagged.map((r) => REASON_LABELS[r] ?? r).join(', ')}) — edit it out
           rather than making it public
+        {:else if almostGated}
+          almost — “not just / not merely” counts only when a dash or comma sets it off, as in
+          “verified in CI, not just locally”
         {:else if unrecognized}
           no contrastive phrase recognized yet — try “rather than” or “instead of”
         {:else if detected.length > 0}
-          detected: {VARIANTS[detected[0]].label}
+          detected: {matches[0]?.phrase.toLowerCase()}
         {/if}
       </span>
     </label>
     <div class="row">
       <label>
         <span class="cap">phrase variant</span>
-        <select name="variant" bind:value={variant}>
-          <option value="auto">detect automatically</option>
+        <!-- A readout, not a choice: the phrase is read from the quote itself.
+             The picker only unlocks when several phrases match and the
+             submitter must say which one anchors the exhibit. -->
+        <select
+          name="variant"
+          bind:value={variant}
+          disabled={!choiceRequired}
+          title={choiceRequired
+            ? 'Several phrases matched — pick the one that anchors this specimen.'
+            : 'Read from the quote automatically — unlocks if several phrases match.'}
+        >
+          <option value="auto">detected automatically</option>
           {#each familyIds as familyId (familyId)}
             <optgroup label={FAMILIES[familyId].label}>
               {#each VARIANT_IDS.filter((id) => VARIANTS[id].family === familyId) as id (id)}
-                <option value={id}>{VARIANTS[id].label}</option>
+                <option value={id} disabled={!detected.includes(id)}
+                  >{VARIANTS[id].forms.join(' / ')}</option
+                >
               {/each}
             </optgroup>
           {/each}
@@ -182,6 +213,16 @@ $effect(() => {
   </form>
 
   <p class="api-note">prefer the terminal? the API is one POST — see <a href="/about">about</a>.</p>
+
+  <!-- The taxonomy gate cuts both ways: a genuinely new shape has no variant
+       to detect. Rare specimens deserve a door, not a wall. -->
+  <p class="api-note">
+    caught a shape the museum doesn’t collect yet? propose a new variant:
+    <a
+      href="mailto:curator@ratherthan.ai?subject=New%20variant%20proposal&body=The%20specimen%20(verbatim%2C%20reviewed%20for%20anything%20private)%3A%0A%0AWhere%20it%20was%20observed%20(model%2C%20integration)%3A%0A"
+      >curator@ratherthan.ai</a
+    > — the curator examines every specimen.
+  </p>
 {/if}
 
 <style>
@@ -237,6 +278,16 @@ $effect(() => {
     border-radius: 6px;
     padding: 0.5rem;
     font: inherit;
+  }
+  /* Dark-mode UA defaults paint every option the same grey, hiding which
+     ones the multi-match picker actually offers. Selectable is bright,
+     ruled-out is dim — the distinction IS the interface. */
+  option {
+    color: var(--text);
+  }
+  option:disabled,
+  optgroup {
+    color: var(--dim);
   }
   button {
     align-self: flex-start;

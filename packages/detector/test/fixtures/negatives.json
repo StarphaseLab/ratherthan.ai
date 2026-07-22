@@ -42,5 +42,25 @@
   {
     "name": "without alone is not a vow",
     "text": "The build passes without warnings now."
+  },
+  {
+    "name": "mid-clause not just, no gate",
+    "text": "It's not just about speed."
+  },
+  {
+    "name": "another ungated not just innocent",
+    "text": "This is not just for developers."
+  },
+  {
+    "name": "not just X but also Y with no preceding punctuation",
+    "text": "The tool helps not just linters but also formatters."
+  },
+  {
+    "name": "gated not just inside double quotes",
+    "text": "The reviewer wrote \"ship the docs — not just the code\" on the PR."
+  },
+  {
+    "name": "gated not just inside a blockquote",
+    "text": "> Prove it at the apply path, not just the dry-run."
   }
 ]

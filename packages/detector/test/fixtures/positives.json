@@ -148,6 +148,36 @@
     ]
   },
   {
+    "name": "founding not just specimen (em-dash gate)",
+    "text": "I'll keep this open until it's proven at the apply path — not just the dry-run that was green all along.",
+    "expect": [
+      {
+        "variant": "not_just",
+        "sentence": "I'll keep this open until it's proven at the apply path — not just the dry-run that was green all along."
+      }
+    ]
+  },
+  {
+    "name": "comma-gated not just",
+    "text": "I want it verified in CI, not just on my machine.",
+    "expect": [
+      {
+        "variant": "not_just",
+        "sentence": "I want it verified in CI, not just on my machine."
+      }
+    ]
+  },
+  {
+    "name": "not merely form of the postfix dismissal",
+    "text": "The fix addresses the root cause — not merely the symptom.",
+    "expect": [
+      {
+        "variant": "not_just",
+        "sentence": "The fix addresses the root cause — not merely the symptom."
+      }
+    ]
+  },
+  {
     "name": "contractions on both sides no longer read as quotes",
     "text": "It's better to test rather than assume, don't you think?",
     "expect": [
