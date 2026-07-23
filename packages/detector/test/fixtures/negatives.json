@@ -62,5 +62,17 @@
   {
     "name": "gated not just inside a blockquote",
     "text": "> Prove it at the apply path, not just the dry-run."
+  },
+  {
+    "name": "ungated mid-clause not another (real wild specimen, gate excludes it)",
+    "text": "The next repair is not another schema tweak."
+  },
+  {
+    "name": "sentence-initial ungated not another",
+    "text": "This is not another tutorial."
+  },
+  {
+    "name": "gated not another inside double quotes",
+    "text": "The reviewer wrote \"a real fix — not another patch\" on the PR."
   }
 ]

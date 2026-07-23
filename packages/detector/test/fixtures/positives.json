@@ -186,5 +186,65 @@
         "sentence": "It's better to test rather than assume, don't you think?"
       }
     ]
+  },
+  {
+    "name": "comma-gated not another (genre dismissal)",
+    "text": "I'm going to treat this as a quality-focused pipeline refactor, not another prompt tweak.",
+    "expect": [
+      {
+        "variant": "not_another",
+        "sentence": "I'm going to treat this as a quality-focused pipeline refactor, not another prompt tweak."
+      }
+    ]
+  },
+  {
+    "name": "em-dash-gated not another, no surrounding space",
+    "text": "A formatting failure should trigger formatting repair only—not another rewrite.",
+    "expect": [
+      {
+        "variant": "not_another",
+        "sentence": "A formatting failure should trigger formatting repair only—not another rewrite."
+      }
+    ]
+  },
+  {
+    "name": "not one more form of the genre dismissal",
+    "text": "This deserves a proper migration, not one more band-aid.",
+    "expect": [
+      {
+        "variant": "not_another",
+        "sentence": "This deserves a proper migration, not one more band-aid."
+      }
+    ]
+  },
+  {
+    "name": "not yet another form (scar tissue)",
+    "text": "Give me a real integration test — not yet another mock.",
+    "expect": [
+      {
+        "variant": "not_another",
+        "sentence": "Give me a real integration test — not yet another mock."
+      }
+    ]
+  },
+  {
+    "name": "founding tweet — gated not another (museum origin document)",
+    "text": "I'm checking the exact current state now and will give you a crisp stop-point, not another open-ended loop.",
+    "expect": [
+      {
+        "variant": "not_another",
+        "sentence": "I'm checking the exact current state now and will give you a crisp stop-point, not another open-ended loop."
+      }
+    ]
+  },
+  {
+    "name": "overlap: not just another resolves to not_just (just wins as the first dismissal word)",
+    "text": "We shipped a real integration — not just another wrapper around the API.",
+    "expect": [
+      {
+        "variant": "not_just",
+        "sentence": "We shipped a real integration — not just another wrapper around the API."
+      }
+    ]
   }
 ]

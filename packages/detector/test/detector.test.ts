@@ -97,6 +97,14 @@ describe('splitByVariant', () => {
     })
   })
 
+  it('keeps the gating punctuation out of the not_another phrase', () => {
+    expect(splitByVariant('a proper migration, not another band-aid.', 'not_another')).toEqual({
+      left: 'a proper migration, ',
+      phrase: 'not another',
+      right: ' band-aid.',
+    })
+  })
+
   it('anchors on the first occurrence when the phrase repeats', () => {
     const parts = splitByVariant('fix it rather than patch rather than ignore', 'rather_than')
     expect(parts?.left).toBe('fix it ')

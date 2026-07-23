@@ -23,6 +23,7 @@ export type VariantId =
   | 'wont_just'
   | 'without_merely'
   | 'not_just'
+  | 'not_another'
 
 export const FAMILIES: Record<Family, { label: string; description: string }> = {
   pivot: { label: 'pivot', description: 'the chosen path, split from the rejected one' },
@@ -33,12 +34,30 @@ export const FAMILIES: Record<Family, { label: string; description: string }> = 
    alternation so the accepted adverb set can never drift between variants. */
 const MINIMIZERS = '(?:just|merely|simply)'
 
+/* The postfix-dismissal gate: bare "not just" / "not another" saturate
+   innocent English, so they only count when a dash or comma sets them off.
+   One shared wrapper keeps the accepted gate punctuation byte-identical across
+   every gated vow (same rationale as MINIMIZERS above). The lookbehind is
+   zero-width, so the match — and splitByVariant's phrase — starts at "not",
+   never at the dash. */
+const gated = (core: RegExp) => new RegExp(`(?<=[—–,-]\\s{0,3})${core.source}`, 'i')
+
+/* The ungated cores of the two gated vows — the phrase shape without the gate.
+   not_just dismisses the bare minimum; not_another dismisses a whole genre
+   ("not another prompt tweak"), a disjoint alternation ("another" confesses
+   there were priors). `isNearMiss` reads them; they never escape this module. */
+const NOT_JUST_CORE = new RegExp(`\\bnot\\s+${MINIMIZERS}\\b`, 'i')
+const NOT_ANOTHER_CORE = /\bnot\s+(?:yet\s+another|another|one\s+more)\b/i
+
 /**
- * The ungated core of `not_just` — the phrase shape without the punctuation
- * gate below. Exported so interfaces can recognize a near-miss (a bare
- * mid-clause "not just") and explain the gate instead of appearing blind.
+ * A near-miss: text whose only vow phrase is an ungated bare core (a mid-clause
+ * "not just" / "not another"). Interfaces use this to explain the punctuation
+ * gate instead of appearing blind when detect() returns nothing. Centralized
+ * here so adding a gated vow never has to touch the UI.
  */
-export const NOT_JUST_CORE = new RegExp(`\\bnot\\s+${MINIMIZERS}\\b`, 'i')
+export function isNearMiss(text: string): boolean {
+  return NOT_JUST_CORE.test(text) || NOT_ANOTHER_CORE.test(text)
+}
 
 /**
  * Published detection rules — the single source of truth for the taxonomy.
@@ -83,12 +102,17 @@ export const VARIANTS: Record<
   not_just: {
     label: 'not just',
     family: 'vow',
-    /* Punctuation-gated: bare "not just" saturates innocent English, so the
-       phrase only counts as a postfix dismissal when a dash or comma sets it
-       off. The gate lives in a lookbehind so the match — and therefore
-       splitByVariant's phrase — starts at "not", never at the dash. */
-    pattern: new RegExp(`(?<=[—–,-]\\s{0,3})${NOT_JUST_CORE.source}`, 'i'),
+    pattern: gated(NOT_JUST_CORE),
     forms: ['not just', 'not merely', 'not simply'],
+  },
+  not_another: {
+    label: 'not another',
+    family: 'vow',
+    /* Disjoint alternation from not_just — a category dismissed, not a minimum.
+       The two vows never collide because just/merely/simply and another/one-more
+       are mutually exclusive words. */
+    pattern: gated(NOT_ANOTHER_CORE),
+    forms: ['not another', 'not yet another', 'not one more'],
   },
 }
 
