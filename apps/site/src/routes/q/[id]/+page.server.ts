@@ -1,5 +1,6 @@
 import { error, fail } from '@sveltejs/kit'
 import { REACTION_KINDS, type ReactionKind } from '$lib/reactions.ts'
+import { getCardObjectKey } from '$lib/server/cards.ts'
 import { clientIp, ctx, VOTER_COOKIE } from '$lib/server/context.ts'
 import { sha256Hex } from '$lib/server/crypto.ts'
 import { getPublished, toggleReaction } from '$lib/server/quotes.ts'
@@ -8,9 +9,12 @@ import type { Actions, PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ platform, params }) => {
   const { db } = ctx(platform)
-  const quote = await getPublished(db, params.id)
+  const [quote, cardKey] = await Promise.all([
+    getPublished(db, params.id),
+    getCardObjectKey(db, params.id),
+  ])
   if (!quote) throw error(404, 'No such specimen in the museum.')
-  return { quote }
+  return { quote, cardKey }
 }
 
 export const actions: Actions = {

@@ -1,7 +1,7 @@
 <script lang="ts">
 import { page } from '$app/state'
 import ReactionGlyphs from '$lib/components/ReactionGlyphs.svelte'
-import { SITE } from '$lib/site.ts'
+import { CARD_SITE, SITE } from '$lib/site.ts'
 
 let { children, data } = $props()
 
@@ -13,9 +13,12 @@ const tagline = data.tagline
 /* Specimen pages share their own postcard; everything else the house card.
    Until minting finishes, card.png serves the house image's bytes directly. */
 const CARD_ROUTES = new Set(['/q/[id]', '/frames/[id]'])
+const cardKey = $derived((page.data as { cardKey?: string | null }).cardKey)
 const ogImage = $derived(
   CARD_ROUTES.has(page.route.id ?? '') && page.params.id
-    ? `${SITE}/q/${page.params.id}/card.png`
+    ? cardKey
+      ? `${CARD_SITE}/${cardKey}`
+      : `${SITE}/q/${page.params.id}/card.png`
     : `${SITE}/og.png`,
 )
 const ogAlt = $derived(

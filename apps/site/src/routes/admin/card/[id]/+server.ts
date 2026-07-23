@@ -12,7 +12,7 @@ const MAX_BYTES = 300_000
  * route would sit outside the wall and let anyone repaint the museum.
  */
 export const PUT: RequestHandler = async (event) => {
-  const { db, requireAccess } = ctx(event.platform)
+  const { db, cards, requireAccess } = ctx(event.platform)
   assertAdmin(event, requireAccess)
 
   const body = await event.request.arrayBuffer()
@@ -28,6 +28,6 @@ export const PUT: RequestHandler = async (event) => {
     .first<{ id: string }>()
   if (!quote) return json({ error: 'No published quote with that id.' }, { status: 404 })
 
-  await putCard(db, quote.id, body)
-  return json({ minted: true })
+  const objectKey = await putCard(db, cards, quote.id, body)
+  return json({ minted: true, objectKey })
 }

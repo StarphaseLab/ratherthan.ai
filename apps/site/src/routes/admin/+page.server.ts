@@ -11,12 +11,12 @@ import {
 import type { Actions, PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async (event) => {
-  const { db, requireAccess } = ctx(event.platform)
+  const { db, cards, requireAccess } = ctx(event.platform)
   assertAdmin(event, requireAccess)
   /* Housekeeping on every visit: cards whose exhibit left by any door
      (token deletion covers itself; SQL edits and purges land here), and
      the 30-day purge of rejected public submissions PRIVACY.md promises. */
-  await Promise.all([purgeOrphanCards(db), purgeExpiredRejects(db)])
+  await Promise.all([purgeOrphanCards(db, cards), purgeExpiredRejects(db)])
   const [pending, known, unminted] = await Promise.all([
     listPending(db, 500),
     establishedLabels(db),

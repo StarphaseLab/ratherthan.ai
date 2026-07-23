@@ -1,15 +1,16 @@
-import type { D1Database, KVNamespace } from '@cloudflare/workers-types'
+import type { D1Database, KVNamespace, R2Bucket } from '@cloudflare/workers-types'
 import { error, type RequestEvent } from '@sveltejs/kit'
 
 export interface Ctx {
   db: D1Database
+  cards: R2Bucket
   rate: KVNamespace
   salt: string
   requireAccess: boolean
 }
 
 export function ctx(platform: App.Platform | undefined): Ctx {
-  if (!platform?.env?.DB || !platform?.env?.RATE)
+  if (!platform?.env?.DB || !platform?.env?.CARDS || !platform?.env?.RATE)
     throw error(500, 'Platform bindings unavailable — is wrangler configured?')
   const requireAccess = platform.env.REQUIRE_ACCESS === 'true'
   /* The dev fallback is fine locally, but hashing voters and rate-limit keys
@@ -20,6 +21,7 @@ export function ctx(platform: App.Platform | undefined): Ctx {
     throw error(500, 'VOTER_SALT is not set — deploy the secret before serving traffic.')
   return {
     db: platform.env.DB,
+    cards: platform.env.CARDS,
     rate: platform.env.RATE,
     salt: platform.env.VOTER_SALT ?? 'dev-salt-not-secret',
     requireAccess,

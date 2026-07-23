@@ -234,10 +234,9 @@ export async function deleteByToken(
     )
     .bind(quoteId, await sha256Hex(token))
     .run()
-  if (result.meta.changes > 0) {
-    /* The postcard dies with the exhibit; edge copies age out within a day. */
-    await db.prepare(`DELETE FROM cards WHERE quote_id = ?`).bind(quoteId).run()
-  }
+  /* The API removes every immutable object before deleting the card row. If
+     object cleanup fails, the hidden quote leaves its row for the admin
+     housekeeping pass to retry. */
   return result.meta.changes > 0
 }
 
