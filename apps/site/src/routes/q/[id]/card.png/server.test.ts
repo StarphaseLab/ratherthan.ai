@@ -39,6 +39,7 @@ describe('specimen card response', () => {
 
     expect(response.status).toBe(200)
     expect(response.headers.get('content-type')).toBe('image/png')
+    expect(response.headers.get('content-length')).toBe(String(CARD.byteLength))
     expect(response.headers.get('cache-control')).toBe('public, max-age=86400')
     expect(response.headers.get('etag')).toBe('"specimen:2026-07-23T12:34:56.789Z"')
     expect(response.headers.has('set-cookie')).toBe(false)
@@ -67,6 +68,7 @@ describe('specimen card response', () => {
 
     expect(response.status).toBe(200)
     expect(response.headers.get('content-type')).toBe('image/png')
+    expect(response.headers.get('content-length')).toBe(String(HOUSE.byteLength))
     expect(response.headers.get('cache-control')).toBe('public, max-age=300')
     expect(response.headers.has('location')).toBe(false)
     expect(response.headers.has('set-cookie')).toBe(false)

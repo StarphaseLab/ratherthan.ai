@@ -9,12 +9,17 @@ async function houseCard(event: CardEvent, reason: string): Promise<Response> {
     try {
       const house = await assets.fetch(new URL('/og.png', event.url.origin))
       if (house.ok) {
+        const png = await house.arrayBuffer()
         console.info(
           JSON.stringify({ event: 'card_origin', id: event.params.id, image: 'house', reason }),
         )
-        return new Response(await house.arrayBuffer(), {
+        return new Response(png, {
           status: 200,
-          headers: { 'content-type': 'image/png', 'cache-control': 'public, max-age=300' },
+          headers: {
+            'content-type': 'image/png',
+            'content-length': String(png.byteLength),
+            'cache-control': 'public, max-age=300',
+          },
         })
       }
     } catch {
@@ -62,6 +67,7 @@ export const GET: RequestHandler = async (event) => {
   return new Response(card.png, {
     headers: {
       'content-type': 'image/png',
+      'content-length': String(card.png.byteLength),
       'cache-control': 'public, max-age=86400',
       etag,
     },

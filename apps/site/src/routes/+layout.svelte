@@ -28,6 +28,7 @@ const ogAlt = $derived(
   <link rel="canonical" href={SITE + page.url.pathname} />
   <meta property="og:url" content={SITE + page.url.pathname} />
   <meta property="og:image" content={ogImage} />
+  <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta property="og:image:alt" content={ogAlt} />
@@ -35,6 +36,9 @@ const ogAlt = $derived(
        every og tag gets an explicit twitter: mirror. -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content={ogImage} />
+  <meta name="twitter:image:type" content="image/png" />
+  <meta name="twitter:image:width" content="1200" />
+  <meta name="twitter:image:height" content="630" />
   <meta name="twitter:image:alt" content={ogAlt} />
 </svelte:head>
 
