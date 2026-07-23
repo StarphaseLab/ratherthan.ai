@@ -60,18 +60,20 @@ const noMatch = $derived(detect(text).length === 0)
       busy = true
       const decision = formData.get('decision')
       return async ({ result, update }) => {
-        /* The approving tap also mints the postcard — from the exact text
-           being published. Best-effort: a failed mint is caught later by
-           the admin page's mint-missing sweep. */
-        if (decision === 'published' && result.type === 'success')
-          void mintCard(quote.id, {
-            text,
-            variant: previewVariant,
-            model: quote.model,
-            integration: quote.integration,
-          })
-        await update({ reset: false })
-        busy = false
+        try {
+          /* Wait for the exact published pixels to land before refreshing.
+             On failure, that refresh exposes the card in the missing sweep. */
+          if (decision === 'published' && result.type === 'success')
+            await mintCard(quote.id, {
+              text,
+              variant: previewVariant,
+              model: quote.model,
+              integration: quote.integration,
+            })
+          await update({ reset: false })
+        } finally {
+          busy = false
+        }
       }
     }}
   >

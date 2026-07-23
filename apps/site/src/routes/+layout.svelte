@@ -11,7 +11,7 @@ let { children, data } = $props()
 const tagline = data.tagline
 
 /* Specimen pages share their own postcard; everything else the house card.
-   card.png 302s to /og.png until the curator has minted one. */
+   Until minting finishes, card.png serves the house image's bytes directly. */
 const CARD_ROUTES = new Set(['/q/[id]', '/frames/[id]'])
 const ogImage = $derived(
   CARD_ROUTES.has(page.route.id ?? '') && page.params.id

@@ -14,7 +14,7 @@ export async function putCard(db: D1Database, quoteId: string, png: ArrayBuffer)
       `INSERT OR REPLACE INTO cards
          (quote_id, png, style_version, minted_at,
           rendered_text, rendered_variant, rendered_model, rendered_integration)
-       SELECT id, ?, ?, datetime('now'), text, variant, model, integration
+       SELECT id, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ', 'now'), text, variant, model, integration
        FROM quotes WHERE id = ?`,
     )
     .bind(png, CARD_STYLE_VERSION, quoteId)

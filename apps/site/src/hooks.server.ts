@@ -4,7 +4,7 @@ import { randomId } from '$lib/server/crypto.ts'
 
 /** Give every visitor an anonymous first-party voter id. No accounts, no tracking. */
 export const handle: Handle = async ({ event, resolve }) => {
-  if (!event.cookies.get(VOTER_COOKIE)) {
+  if (event.route.id !== '/q/[id]/card.png' && !event.cookies.get(VOTER_COOKIE)) {
     event.cookies.set(VOTER_COOKIE, randomId(20), {
       path: '/',
       httpOnly: true,
