@@ -1,5 +1,6 @@
 import type { D1Database, KVNamespace, R2Bucket } from '@cloudflare/workers-types'
-import { error, type RequestEvent } from '@sveltejs/kit'
+import { type Cookies, error, type RequestEvent } from '@sveltejs/kit'
+import { randomId } from './crypto.ts'
 
 export interface Ctx {
   db: D1Database
@@ -33,6 +34,21 @@ export function clientIp(event: RequestEvent): string {
 }
 
 export const VOTER_COOKIE = 'rt_voter'
+
+/** Create anonymous voter identity only when someone actually votes. */
+export function getOrCreateVoter(cookies: Pick<Cookies, 'get' | 'set'>): string {
+  const existing = cookies.get(VOTER_COOKIE)
+  if (existing) return existing
+
+  const voter = randomId(20)
+  cookies.set(VOTER_COOKIE, voter, {
+    path: '/',
+    httpOnly: true,
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 24 * 365,
+  })
+  return voter
+}
 
 /**
  * Admin guard. Real enforcement is Cloudflare Access at the edge in front of
