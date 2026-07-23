@@ -363,7 +363,7 @@ function onKey(event: KeyboardEvent) {
           class:copied={copyFeedback.copied}
           aria-label="Copy link to this specimen"
           title="Copy link to this specimen"
-          onclick={() => current && copyFeedback.copy(`/q/${current.id}`)}
+          onclick={() => current && copyFeedback.copyLink(`/q/${current.id}`)}
         >
           {#if copyFeedback.copied}
             <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true">
@@ -518,6 +518,12 @@ function onKey(event: KeyboardEvent) {
     pointer-events: none;
     transition: opacity 0.15s;
     z-index: 1;
+    /* Switcher chrome, never content: opacity:0 still leaves it in the
+       selection range (it sits in DOM order between the phrase and the right
+       side), so selecting the sentence used to copy every variant label with
+       it. It's a control you click, never text you select. */
+    -webkit-user-select: none;
+    user-select: none;
   }
   .anchor:hover .variants,
   .anchor:focus-within .variants,

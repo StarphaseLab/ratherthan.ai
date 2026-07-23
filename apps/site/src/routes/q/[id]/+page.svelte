@@ -1,16 +1,14 @@
 <script lang="ts">
 import Exhibit from '$lib/components/Exhibit.svelte'
+import HeadMeta from '$lib/components/HeadMeta.svelte'
 
 let { data } = $props()
 </script>
 
 <svelte:head>
   <title>“{data.quote.text}” — ratherthan.ai</title>
-  <meta property="og:title" content="A specimen of agent rhetoric" />
-  <meta property="og:description" content={data.quote.text} />
-  <meta name="twitter:title" content="A specimen of agent rhetoric" />
-  <meta name="twitter:description" content={data.quote.text} />
 </svelte:head>
+<HeadMeta title="A specimen of agent rhetoric — visit the museum" description={data.quote.text} />
 
 <Exhibit quote={data.quote} reactAction="?/react" />
 

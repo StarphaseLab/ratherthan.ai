@@ -2,15 +2,21 @@
 import {
   detect,
   FAMILIES,
-  NOT_JUST_CORE,
+  isNearMiss,
   sensitiveReasons,
   VARIANT_IDS,
   VARIANTS,
 } from '@ratherthan/detector'
 import { enhance } from '$app/forms'
+import HeadMeta from '$lib/components/HeadMeta.svelte'
+import { CopyFeedback } from '$lib/copy-link.svelte.ts'
 import { MAX_LABEL_LENGTH, MAX_TEXT_LENGTH } from '$lib/limits.ts'
 
 let { data, form } = $props()
+
+/* The token is shown exactly once; one click to pocket it beats a hand-drag
+   over a break-all string that a fumble could lose forever. */
+const tokenCopy = new CopyFeedback()
 
 let submitting = $state(false)
 
@@ -30,10 +36,10 @@ const unrecognized = $derived(hasText && detected.length === 0)
    must be picked to anchor the exhibit; otherwise the picker is a readout. */
 const choiceRequired = $derived(detected.length > 1)
 
-/* The not_just punctuation gate is invisible while typing — a bare "not just"
+/* The vow gates are invisible while typing — a bare "not just" / "not another"
    is deliberately ignored (innocent English) until a dash or comma sets it
    off. Surface that instead of letting the type-along feel dead. */
-const almostGated = $derived(unrecognized && NOT_JUST_CORE.test(text))
+const almostGated = $derived(unrecognized && isNearMiss(text))
 
 /* Same screen the server enforces, run before anything is sent — flagged
    text never has to leave the machine at all. */
@@ -58,17 +64,11 @@ $effect(() => {
 
 <svelte:head>
   <title>Submit a specimen — ratherthan.ai</title>
-  <meta property="og:title" content="Submit a specimen" />
-  <meta
-    property="og:description"
-    content="One sentence of genuine agent output containing a contrastive phrase. You are the redaction pipeline; a human reviews everything."
-  />
-  <meta name="twitter:title" content="Submit a specimen" />
-  <meta
-    name="twitter:description"
-    content="One sentence of genuine agent output containing a contrastive phrase. You are the redaction pipeline; a human reviews everything."
-  />
 </svelte:head>
+<HeadMeta
+  title="Submit a specimen"
+  description="One sentence of genuine agent output containing a contrastive phrase. You are the redaction pipeline; a human reviews everything."
+/>
 
 <h1>Submit a specimen</h1>
 
@@ -78,11 +78,26 @@ $effect(() => {
       Accepted into the moderation queue. If a human curator finds it worthy, it will appear in the
       museum.
     </p>
-    <p>
-      Your anonymous deletion token — save it now, it is shown exactly once and lets you remove the
-      quote forever:
-    </p>
-    <code>{form.submitted.id}:{form.submitted.deleteToken}</code>
+    <div class="token-block">
+      <p>
+        <strong>Your anonymous deletion token</strong> — save it now, it is shown exactly once and
+        lets you remove the quote forever:
+      </p>
+      <div class="token-field">
+        <code>{form.submitted.id}:{form.submitted.deleteToken}</code>
+        <button
+          type="button"
+          class="copy-token"
+          class:copied={tokenCopy.copied}
+          onclick={() => tokenCopy.copy(`${form.submitted.id}:${form.submitted.deleteToken}`)}
+        >
+          {tokenCopy.copied ? 'copied' : 'copy token'}
+        </button>
+      </div>
+      <p class="token-help">
+        Keep the whole string. <a href="/about#api">How deletion works →</a>
+      </p>
+    </div>
   </div>
 {:else}
   <p class="rules">
@@ -124,8 +139,8 @@ $effect(() => {
           looks private ({flagged.map((r) => REASON_LABELS[r] ?? r).join(', ')}) — edit it out
           rather than making it public
         {:else if almostGated}
-          almost — “not just / not merely” counts only when a dash or comma sets it off, as in
-          “verified in CI, not just locally”
+          almost — “not just” or “not another” counts only when a dash or comma sets it off, as in
+          “a real refactor, not another prompt tweak”
         {:else if unrecognized}
           no contrastive phrase recognized yet — try “rather than” or “instead of”
         {:else if detected.length > 0}
@@ -217,7 +232,7 @@ $effect(() => {
     </datalist>
   </form>
 
-  <p class="api-note">prefer the terminal? the API is one POST — see <a href="/about">about</a>.</p>
+  <p class="api-note">prefer the terminal? the API is one POST — see <a href="/about#api">about</a>.</p>
 
   <!-- The taxonomy gate cuts both ways: a genuinely new shape has no variant
        to detect. Rare specimens deserve a door, not a wall. -->
@@ -249,12 +264,50 @@ $effect(() => {
     border-radius: 8px;
     padding: 1rem;
   }
-  .success code {
-    display: block;
+  /* A quiet rule divides the receipt from the one thing worth keeping. */
+  .token-block {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+  .token-block strong {
+    color: var(--accent);
+    font-weight: 700;
+  }
+  /* The token and its copy action share one field, so the whole thing reads
+     as a control awaiting a click rather than a passive readout. */
+  .token-field {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
     background: var(--panel);
-    padding: 0.5rem;
+    border: 1px solid var(--border);
     border-radius: 4px;
+    padding: 0.5rem 0.6rem;
+  }
+  .token-field code {
+    flex: 1;
     word-break: break-all;
+  }
+  .copy-token {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    font-size: 0.85rem;
+    color: var(--dim);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .copy-token:hover,
+  .copy-token.copied {
+    color: var(--accent);
+  }
+  .token-help {
+    margin: 0.75rem 0 0;
+    font-size: 0.8rem;
+    color: var(--dim);
   }
   form {
     display: flex;

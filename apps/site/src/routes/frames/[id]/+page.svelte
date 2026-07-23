@@ -1,6 +1,7 @@
 <script lang="ts">
 import { goto } from '$app/navigation'
 import Exhibit from '$lib/components/Exhibit.svelte'
+import HeadMeta from '$lib/components/HeadMeta.svelte'
 import { isTypingTarget } from '$lib/keys.ts'
 
 let { data } = $props()
@@ -21,11 +22,8 @@ function onKey(event: KeyboardEvent) {
 
 <svelte:head>
   <title>Hall of Frames — ratherthan.ai</title>
-  <meta property="og:title" content="Hall of Frames — a specimen of agent rhetoric" />
-  <meta property="og:description" content={data.quote.text} />
-  <meta name="twitter:title" content="Hall of Frames — a specimen of agent rhetoric" />
-  <meta name="twitter:description" content={data.quote.text} />
 </svelte:head>
+<HeadMeta title="Hall of Frames — a specimen of agent rhetoric" description={data.quote.text} />
 
 <h1>hall of frames</h1>
 

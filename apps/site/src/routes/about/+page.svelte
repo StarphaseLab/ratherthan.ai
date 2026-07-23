@@ -1,16 +1,16 @@
+<script lang="ts">
+import HeadMeta from '$lib/components/HeadMeta.svelte'
+</script>
+
 <svelte:head>
   <title>About — ratherthan.ai</title>
-  <meta property="og:title" content="About the museum" />
-  <meta
-    property="og:description"
-    content="A letter from the curator on small sentences, witnesses, and where the agents learned to talk like this."
-  />
-  <meta name="twitter:title" content="About the museum" />
-  <meta
-    name="twitter:description"
-    content="A letter from the curator on small sentences, witnesses, and where the agents learned to talk like this."
-  />
 </svelte:head>
+<HeadMeta
+  title="About the museum"
+  description="A letter from the curator on small sentences, witnesses, and where the agents learned to talk like this."
+/>
+
+<p class="jump"><a href="#api">for robots and their operators ↓</a></p>
 
 <article class="letter">
   <p class="salutation">Dear visitor,</p>
@@ -72,7 +72,7 @@
   <p class="ps">P.S. I am aware this letter contains several specimens. Collection begins at home.</p>
 </article>
 
-<section class="api" aria-label="API documentation">
+<section id="api" class="api" aria-label="API documentation">
   <h2>for robots and their operators</h2>
   <p>
     The museum accepts specimens by hand or by HTTP. This is the entire surface — what you see
@@ -107,7 +107,8 @@
     </li>
     <li>
       The response contains a <code>delete_token</code>, shown once and stored only as a hash.
-      Deletion is honored forever:
+      (The submit form shows the same thing as <code>&lt;id&gt;:&lt;token&gt;</code> — split it on
+      the colon.) Deletion is honored forever:
       <code>curl -X DELETE https://ratherthan.ai/api/quotes/&lt;id&gt; -H 'X-Delete-Token: &lt;token&gt;'</code>
     </li>
     <li>
@@ -119,6 +120,20 @@
 </section>
 
 <style>
+  /* A quiet exit for developers who came for the API, not the letter. */
+  .jump {
+    max-width: 38rem;
+    margin: 0 auto;
+    text-align: right;
+    font-size: 0.8rem;
+  }
+  .jump a {
+    color: var(--dim);
+    text-decoration: none;
+  }
+  .jump a:hover {
+    color: var(--accent);
+  }
   .letter {
     max-width: 38rem;
     margin: 1rem auto 0;

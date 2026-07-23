@@ -11,7 +11,7 @@ const feedback = new CopyFeedback()
 <button
   type="button"
   class:copied={feedback.copied}
-  onclick={() => feedback.copy(path)}
+  onclick={() => feedback.copyLink(path)}
   aria-label="Copy link to this specimen"
 >
   {feedback.copied ? 'copied' : 'copy link'}
