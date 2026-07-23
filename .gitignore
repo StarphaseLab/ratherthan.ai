@@ -10,6 +10,8 @@ dist/
 # transcript-derived content stays local until curated
 apps/site/wild-import.sql
 apps/site/triage.sql
+apps/site/notjust-import.sql
+apps/site/notanother-import.sql
 
 # internal working docs: handoff plans, notes, drafts — never published
 docs/
