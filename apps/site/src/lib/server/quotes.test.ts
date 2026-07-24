@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { MAX_TEXT_LENGTH } from '$lib/limits.ts'
-import { validateSubmission } from './quotes.ts'
+import { randomPositionForVariant, validateSubmission } from './quotes.ts'
 
 const valid = {
   text: "I'll inspect the actual logs rather than speculate.",
@@ -56,5 +56,22 @@ describe('validateSubmission', () => {
       field: 'labels',
       code: 'too_long',
     })
+  })
+})
+
+describe('randomPositionForVariant', () => {
+  const quotes = [
+    { variant: 'rather_than' },
+    { variant: 'instead_of' },
+    { variant: 'rather_than' },
+  ] as const
+
+  it('selects a valid position within the requested variant', () => {
+    expect(randomPositionForVariant(quotes, 'rather_than', () => 0)).toBe(0)
+    expect(randomPositionForVariant(quotes, 'rather_than', () => 0.999)).toBe(1)
+  })
+
+  it('falls back to the first position when the variant is absent', () => {
+    expect(randomPositionForVariant(quotes, 'not_just', () => 0.5)).toBe(0)
   })
 })

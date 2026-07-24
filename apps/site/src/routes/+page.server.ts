@@ -1,5 +1,5 @@
 import { ctx } from '$lib/server/context.ts'
-import { listHeroPool, listPublished } from '$lib/server/quotes.ts'
+import { listHeroPool, listPublished, randomPositionForVariant } from '$lib/server/quotes.ts'
 import type { PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ platform, url }) => {
@@ -12,5 +12,10 @@ export const load: PageServerLoad = async ({ platform, url }) => {
     listPublished(db, sort, page - 1),
     listHeroPool(db),
   ])
-  return { sort, page, hasMore, quotes, heroPool }
+  /* Open on a random specimen from the site's namesake phrase. Choosing on
+     the server keeps SSR and hydration in agreement; Hero still owns all
+     subsequent browsing and shuffle behavior. */
+  const initialHeroPosition = randomPositionForVariant(heroPool, 'rather_than')
+
+  return { sort, page, hasMore, quotes, heroPool, initialHeroPosition }
 }

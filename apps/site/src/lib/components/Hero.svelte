@@ -14,17 +14,19 @@ import { isTypingTarget } from '$lib/keys.ts'
 import type { QuoteRow } from '$lib/server/quotes.ts'
 import { pickSizes, SIZES, sideShare } from '$lib/stage-fit.ts'
 
-let { quotes }: { quotes: QuoteRow[] } = $props()
+let { quotes, initialPosition }: { quotes: QuoteRow[]; initialPosition: number } = $props()
 
-/* Start on the first shape this page actually stocks — a hard-coded default
-   would blank the whole hero (switcher included) on a page whose quotes are
-   all some other variant. */
+/* The server deals the opening specimen so SSR and hydration render the same
+   quote. Fall back to the first shape this page actually stocks — a hard-coded
+   default would blank the whole hero on a collection without that variant. */
 let variantId: VariantId = $state(
-  VARIANT_IDS.find((id) => quotes.some((q) => q.variant === id)) ?? 'rather_than',
+  VARIANT_IDS.find((id) => quotes.some((quote) => quote.variant === id)) ?? 'rather_than',
 )
 /* Each shape's pool remembers where the visitor was, so crossing shapes
-   and returning resumes at the same specimen instead of resetting. */
-let positions: Partial<Record<VariantId, number>> = $state({})
+   and returning resumes at the same specimen instead of resetting. The
+   server's opening deal is likewise a one-time seed, not reactive input. */
+// svelte-ignore state_referenced_locally
+let positions: Partial<Record<VariantId, number>> = $state({ rather_than: initialPosition })
 const index = $derived(positions[variantId] ?? 0)
 let direction = $state(1)
 let axis: 'x' | 'y' = $state('y')
@@ -342,23 +344,6 @@ function onKey(event: KeyboardEvent) {
         {/if}
       </div>
       <div class="nav-row">
-        <!-- Inline die, not U+2684: dice glyphs are tofu in too many fonts. -->
-        <button aria-label="Random specimen" title="Random specimen" onclick={shuffle}>
-          <svg class="die" viewBox="0 0 24 24" aria-hidden="true">
-            <rect x="4" y="4" width="16" height="16" rx="3" />
-            <circle cx="8.5" cy="8.5" r="1.4" />
-            <circle cx="15.5" cy="8.5" r="1.4" />
-            <circle cx="12" cy="12" r="1.4" />
-            <circle cx="8.5" cy="15.5" r="1.4" />
-            <circle cx="15.5" cy="15.5" r="1.4" />
-          </svg>
-        </button>
-        <button
-          aria-label={userPaused ? 'Resume the rotation' : 'Pause the rotation'}
-          title={userPaused ? 'Resume the rotation' : 'Pause the rotation'}
-          aria-pressed={userPaused}
-          onclick={togglePause}>{userPaused ? '▷' : '❚❚'}</button
-        >
         <button
           class:copied={copyFeedback.copied}
           aria-label="Copy link to this specimen"
@@ -376,6 +361,23 @@ function onKey(event: KeyboardEvent) {
               <path d="M15.5 5.5v-1a2 2 0 0 0-2-2h-8a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h1" />
             </svg>
           {/if}
+        </button>
+        <button
+          aria-label={userPaused ? 'Resume the rotation' : 'Pause the rotation'}
+          title={userPaused ? 'Resume the rotation' : 'Pause the rotation'}
+          aria-pressed={userPaused}
+          onclick={togglePause}>{userPaused ? '▷' : '❚❚'}</button
+        >
+        <!-- Inline die, not U+2684: dice glyphs are tofu in too many fonts. -->
+        <button aria-label="Random specimen" title="Random specimen" onclick={shuffle}>
+          <svg class="die" viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="4" y="4" width="16" height="16" rx="3" />
+            <circle cx="8.5" cy="8.5" r="1.4" />
+            <circle cx="15.5" cy="8.5" r="1.4" />
+            <circle cx="12" cy="12" r="1.4" />
+            <circle cx="8.5" cy="15.5" r="1.4" />
+            <circle cx="15.5" cy="15.5" r="1.4" />
+          </svg>
         </button>
       </div>
     </nav>
@@ -692,6 +694,21 @@ function onKey(event: KeyboardEvent) {
     .stage {
       min-height: 13.5rem;
       gap: 0.3rem;
+    }
+    .nav-row {
+      gap: 0.5rem;
+    }
+    .specimen-nav button {
+      min-width: calc(2.8rem * 1.3);
+      height: calc(2.6rem * 1.3);
+      border-radius: calc(8px * 1.3);
+      font-size: calc(1.1rem * 1.3);
+    }
+    .die,
+    .glyph {
+      width: calc(17px * 1.3);
+      height: calc(17px * 1.3);
+      vertical-align: -4px;
     }
     .caption .who {
       white-space: normal;

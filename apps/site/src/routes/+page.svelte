@@ -29,7 +29,7 @@ function pageHref(sort: string, page: number) {
 
 <h1 class="sr-only">ratherthan.ai — a public museum of agent rhetoric</h1>
 
-<Hero quotes={data.heroPool} />
+<Hero quotes={data.heroPool} initialPosition={data.initialHeroPosition} />
 
 <section class="legend" aria-label="The five reactions">
   <details open={legendOpen}>
