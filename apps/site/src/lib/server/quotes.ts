@@ -170,6 +170,16 @@ export async function listHeroPool(db: D1Database): Promise<QuoteRow[]> {
   return results.map(toQuote)
 }
 
+/** Pick a zero-based position within one variant's stage pool. */
+export function randomPositionForVariant(
+  quotes: readonly Pick<QuoteRow, 'variant'>[],
+  variant: VariantId,
+  random = Math.random,
+): number {
+  const count = quotes.filter((quote) => quote.variant === variant).length
+  return count > 0 ? Math.floor(random() * count) : 0
+}
+
 export async function getPublished(db: D1Database, id: string): Promise<QuoteRow | null> {
   const row = await db
     .prepare(`${QUOTE_SELECT} WHERE q.id = ? AND q.status = 'published'`)
