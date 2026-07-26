@@ -391,7 +391,9 @@ function onKey(event: KeyboardEvent) {
     position: relative;
     left: 50%;
     transform: translateX(-50%);
-    padding: 2.5rem max(1rem, calc(50vw - 36rem)) 2rem;
+    /* The stage ends close under its controls; whatever the page hangs
+       below owns the rest of the gap. */
+    padding: 2.5rem max(1rem, calc(50vw - 36rem)) 1rem;
   }
 
   /* Sentence stacked around the anchored phrase. Equal flexible rows above

@@ -199,6 +199,26 @@ export async function listFramed(db: D1Database): Promise<QuoteRow[]> {
   return results.map(toQuote)
 }
 
+/**
+ * A few other specimens to hang beside the one a visitor arrived at.
+ * Random, not recent: an arrival from a shared link has seen none of the
+ * collection, and a fresh three on every load rewards a second visit.
+ */
+export async function listCompanions(db: D1Database, excludeId: string): Promise<QuoteRow[]> {
+  /* Shuffle ids, then hydrate the three winners. Ordering QUOTE_SELECT itself
+     by RANDOM() would run its reaction-count subquery for every published
+     row and throw all but three away — cost growing with the collection on
+     the museum's most-visited route. */
+  const { results } = await db
+    .prepare(
+      `${QUOTE_SELECT} WHERE q.id IN
+         (SELECT id FROM quotes WHERE status = 'published' AND id != ? ORDER BY RANDOM() LIMIT 3)`,
+    )
+    .bind(excludeId)
+    .all<QuoteQueryRow>()
+  return results.map(toQuote)
+}
+
 export async function randomPublishedId(db: D1Database): Promise<string | null> {
   const row = await db
     .prepare(`SELECT id FROM quotes WHERE status = 'published' ORDER BY RANDOM() LIMIT 1`)

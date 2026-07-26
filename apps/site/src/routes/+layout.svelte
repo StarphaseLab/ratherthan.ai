@@ -1,7 +1,7 @@
 <script lang="ts">
 import { page } from '$app/state'
 import ReactionGlyphs from '$lib/components/ReactionGlyphs.svelte'
-import { CARD_SITE, SITE } from '$lib/site.ts'
+import { CARD_SITE, SITE, X_HANDLE, X_URL } from '$lib/site.ts'
 
 let { children, data } = $props()
 
@@ -68,7 +68,10 @@ const ogAlt = $derived(
   <footer>
     <p>
       <span class="tagline">{tagline}</span>
-      <a href="https://github.com/StarphaseLab/ratherthan.ai">source</a>
+      <span class="links">
+        <a href={X_URL} rel="me noopener" target="_blank">follow {X_HANDLE}</a>
+        <a href="https://github.com/StarphaseLab/ratherthan.ai" class="quiet">source</a>
+      </span>
     </p>
   </footer>
 </div>
@@ -129,11 +132,15 @@ const ogAlt = $derived(
     flex-wrap: wrap;
     gap: 0.25rem 1rem;
   }
-  nav a {
+  /* The de-emphasized link idiom, declared once: nav items, and the footer's
+     source link — open source matters, the follow matters more right now. */
+  nav a,
+  footer a.quiet {
     color: var(--dim);
     text-decoration: none;
   }
-  nav a:hover {
+  nav a:hover,
+  footer a.quiet:hover {
     color: var(--text);
   }
   /* The hall's ticks hint green without claiming the accent for the label —
@@ -171,5 +178,12 @@ const ogAlt = $derived(
   }
   .tagline {
     font-style: italic;
+  }
+  /* Both links travel together on the right; they wrap as a pair when the
+     tagline needs the whole line. */
+  .links {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
   }
 </style>

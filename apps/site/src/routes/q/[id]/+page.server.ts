@@ -3,18 +3,19 @@ import { REACTION_KINDS, type ReactionKind } from '$lib/reactions.ts'
 import { getCardObjectKey } from '$lib/server/cards.ts'
 import { clientIp, ctx, getOrCreateVoter } from '$lib/server/context.ts'
 import { sha256Hex } from '$lib/server/crypto.ts'
-import { getPublished, toggleReaction } from '$lib/server/quotes.ts'
+import { getPublished, listCompanions, toggleReaction } from '$lib/server/quotes.ts'
 import { allowRequest } from '$lib/server/rate-limit.ts'
 import type { Actions, PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ platform, params }) => {
   const { db } = ctx(platform)
-  const [quote, cardKey] = await Promise.all([
+  const [quote, cardKey, companions] = await Promise.all([
     getPublished(db, params.id),
     getCardObjectKey(db, params.id),
+    listCompanions(db, params.id),
   ])
   if (!quote) throw error(404, 'No such specimen in the museum.')
-  return { quote, cardKey }
+  return { quote, cardKey, companions }
 }
 
 export const actions: Actions = {

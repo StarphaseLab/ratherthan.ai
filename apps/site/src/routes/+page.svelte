@@ -1,4 +1,5 @@
 <script lang="ts">
+import FollowLine from '$lib/components/FollowLine.svelte'
 import HeadMeta from '$lib/components/HeadMeta.svelte'
 import Hero from '$lib/components/Hero.svelte'
 import QuoteCard from '$lib/components/QuoteCard.svelte'
@@ -30,6 +31,8 @@ function pageHref(sort: string, page: number) {
 <h1 class="sr-only">ratherthan.ai — a public museum of agent rhetoric</h1>
 
 <Hero quotes={data.heroPool} initialPosition={data.initialHeroPosition} />
+
+<FollowLine />
 
 <section class="legend" aria-label="The five reactions">
   <details open={legendOpen}>
@@ -96,7 +99,7 @@ function pageHref(sort: string, page: number) {
     white-space: nowrap;
   }
   .legend {
-    margin-top: 2rem;
+    margin-top: 1rem;
     border-top: 1px solid var(--border);
     padding-top: 1rem;
   }
