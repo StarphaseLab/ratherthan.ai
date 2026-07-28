@@ -9,13 +9,22 @@ import type { QuoteRow } from '$lib/server/quotes.ts'
    has spoken — the double frame and the plaque. Shared by the permalink
    page and the hall; idHref turns the specimen id into a link when the
    page showing it is not the permalink itself; copyPath is the path the
-   copy-link button hands out (the hall passes its own /frames permalink). */
+   copy-link button hands out (the hall passes its own /frames permalink);
+   postcard offers the share card as a download — pass it only when the
+   card is minted, or the visitor leaves with the house card by mistake. */
 let {
   quote,
   reactAction,
   idHref,
   copyPath = `/q/${quote.id}`,
-}: { quote: QuoteRow; reactAction: string; idHref?: string; copyPath?: string } = $props()
+  postcard = false,
+}: {
+  quote: QuoteRow
+  reactAction: string
+  idHref?: string
+  copyPath?: string
+  postcard?: boolean
+} = $props()
 </script>
 
 <!-- The double frame is the hall's regalia: only plaqued specimens wear it. -->
@@ -27,6 +36,11 @@ let {
   — {attributionLabel(quote)} ·
   {#if idHref}<a href={idHref}>#{quote.id}</a>{:else}#{quote.id}{/if} ·
   <CopyLink path={copyPath} />
+  <!-- Same-origin on purpose: the download attribute is ignored cross-origin,
+       and cards.ratherthan.ai would open a bare PNG tab instead of saving. -->
+  {#if postcard}
+    · <a href="/q/{quote.id}/card.png" download="ratherthan-{quote.id}.png">take a postcard</a>
+  {/if}
 </p>
 
 <ReactionPills {quote} action={reactAction} />

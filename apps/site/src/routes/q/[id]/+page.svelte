@@ -12,7 +12,7 @@ let { data } = $props()
 </svelte:head>
 <HeadMeta title="A specimen of agent rhetoric — visit the museum" description={data.quote.text} />
 
-<Exhibit quote={data.quote} reactAction="?/react" />
+<Exhibit quote={data.quote} reactAction="?/react" postcard={Boolean(data.cardKey)} />
 
 <!-- The reaction pills end flush; the stage on the home page carries its own
      rest below the controls. This gives the line the same air on both. -->
