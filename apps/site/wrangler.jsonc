@@ -33,6 +33,14 @@
       "id": "fa5662008b774883a7520bd26ae53d43"
     }
   ],
+  // Persistent invocation logs (Workers Logs, free tier): intermittent
+  // faults don't wait for a live tail, so the worker keeps its own record.
+  // Full sampling is nothing at museum volume. No request bodies, no
+  // visitor identifiers — invocation metadata and our own console lines.
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
   "vars": {
     // Fail-safe default: a deploy that forgets everything else still refuses
     // admin requests without a Cloudflare Access identity. Local dev opts out
