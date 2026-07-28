@@ -49,6 +49,7 @@ function onKey(event: KeyboardEvent) {
   reactAction="/q/{data.quote.id}?/react"
   idHref="/q/{data.quote.id}"
   copyPath="/frames/{data.quote.id}"
+  postcard={Boolean(data.cardKey)}
 />
 
 <p class="back"><a href="/">← back to the museum</a></p>
