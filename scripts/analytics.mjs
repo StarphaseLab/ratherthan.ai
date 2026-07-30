@@ -137,8 +137,19 @@ function summarize(rows) {
      whether a card was actually fetched for a post. */
   const twitterbot = rows.filter((row) => /twitterbot/i.test(row.userAgent))
 
+  /* Tripwire, not a metric. Zone-level Web Analytics once collected RUM
+     beacons here while the museum promised no tracking (disabled
+     2026-07-30). A 2xx on this path means someone turned it back on —
+     that must never hide inside the plumbing filter again. */
+  const beacons = rows
+    .filter(
+      (row) => row.clientRequestPath === '/cdn-cgi/rum' && Number(row.edgeResponseStatus) < 300,
+    )
+    .reduce((sum, row) => sum + row.count, 0)
+
   return {
     total,
+    beacons,
     humanRequests: human.reduce((sum, row) => sum + row.count, 0),
     botRequests: bots.reduce((sum, row) => sum + row.count, 0),
     cardRequests: cards.reduce((sum, row) => sum + row.count, 0),
@@ -164,6 +175,12 @@ function summarize(rows) {
 function report(summary, since, until) {
   const pct = (n) => (summary.total ? `${Math.round((n / summary.total) * 100)}%` : '—')
   const lines = [
+    ...(summary.beacons
+      ? [
+          `!! TRACKING: ${summary.beacons} RUM beacons accepted on /cdn-cgi/rum — Web Analytics is ON again. Disable it (dashboard → Web Analytics) and tell the director.`,
+          '',
+        ]
+      : []),
     `window     ${since} → ${until}`,
     `requests   ${summary.total} total · ${summary.botRequests} bot (${pct(summary.botRequests)}) · ${summary.cardRequests} card image`,
     `human      ${summary.humanRequests} page requests after filtering (${pct(summary.humanRequests)})`,
