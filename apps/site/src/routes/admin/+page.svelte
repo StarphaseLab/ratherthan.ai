@@ -1,8 +1,8 @@
 <script lang="ts">
 import type { VariantId } from '@ratherthan/detector'
 import { invalidateAll } from '$app/navigation'
-import { PROPOSED_VARIANT } from '$lib/proposed.ts'
 import { mintCard } from '$lib/card-render.ts'
+import { PROPOSED_VARIANT } from '$lib/proposed.ts'
 import AdminItem from './AdminItem.svelte'
 
 let { data, form } = $props()
