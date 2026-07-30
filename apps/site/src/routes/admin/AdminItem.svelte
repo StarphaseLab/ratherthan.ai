@@ -4,11 +4,12 @@ import { enhance } from '$app/forms'
 import { mintCard } from '$lib/card-render.ts'
 import StagePreview from '$lib/components/StagePreview.svelte'
 import { MAX_TEXT_LENGTH } from '$lib/limits.ts'
+import { type PendingVariant, PROPOSED_VARIANT } from '$lib/proposed.ts'
 
 interface PendingQuote {
   id: string
   text: string
-  variant: VariantId
+  variant: PendingVariant
   model: string | null
   provider: string | null
   integration: string | null
@@ -45,6 +46,12 @@ const previewVariant = $derived.by(() => {
   return matches[0]?.variant ?? quote.variant
 })
 const noMatch = $derived(detect(text).length === 0)
+
+/* A proposal with no detectable phrase has no approve button at all — the
+   server would refuse anyway; the button reappears only if an edit lands
+   the text in a family the detector already knows (or the family ships and
+   this page reloads under the new detector). */
+const stillProposal = $derived(quote.variant === PROPOSED_VARIANT && noMatch)
 </script>
 
 <section class="item">
@@ -66,7 +73,8 @@ const noMatch = $derived(detect(text).length === 0)
           if (decision === 'published' && result.type === 'success')
             await mintCard(quote.id, {
               text,
-              variant: previewVariant,
+              /* Publish only succeeds after detection, so this is a real id. */
+              variant: previewVariant as VariantId,
               model: quote.model,
               integration: quote.integration,
             })
@@ -82,7 +90,8 @@ const noMatch = $derived(detect(text).length === 0)
     <div class="row">
       <span class="meta">
         {previewVariant}
-        {#if noMatch}<strong class="warn">no phrase detected</strong>{/if}
+        {#if stillProposal}<strong class="proposed">awaiting a family</strong>
+        {:else if noMatch}<strong class="warn">no phrase detected</strong>{/if}
         · <span class:novel={novel(quote.model, known.models)}>{quote.model ?? 'model?'}</span>
         · <span class:novel={novel(quote.provider, known.providers)}>{quote.provider ?? '?'}</span>
         ·
@@ -92,9 +101,11 @@ const noMatch = $derived(detect(text).length === 0)
         · #{quote.id}
       </span>
       <span class="buttons">
-        <button name="decision" value="published" class="approve" disabled={busy || noMatch}>
-          publish
-        </button>
+        {#if !stillProposal}
+          <button name="decision" value="published" class="approve" disabled={busy || noMatch}>
+            publish
+          </button>
+        {/if}
         <button name="decision" value="passed" class="pass" disabled={busy} title="Can't decide — send to the end of the queue">
           pass
         </button>
@@ -146,6 +157,11 @@ const noMatch = $derived(detect(text).length === 0)
   }
   .warn {
     color: var(--reject);
+  }
+  .proposed {
+    color: var(--accent);
+    font-weight: 400;
+    font-style: italic;
   }
   .novel {
     color: var(--reject);

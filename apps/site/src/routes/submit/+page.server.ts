@@ -6,6 +6,7 @@ import {
   errorMessage,
   establishedLabels,
   insertQuote,
+  PROPOSED_VARIANT,
   validateSubmission,
 } from '$lib/server/quotes.ts'
 import { allowRequest } from '$lib/server/rate-limit.ts'
@@ -30,10 +31,15 @@ export const actions: Actions = {
 
     /* Length-gate before detect: this line runs on raw, pre-validation,
        pre-rate-limit input, so the regexes must never see unbounded text.
-       Oversized submissions keep variant 'auto' and fail validation anyway. */
+       Oversized submissions keep variant 'auto' and fail validation anyway.
+       The propose flag (the offer's second submit) only matters when
+       detection finds nothing — a recognized phrase keeps its family, and
+       validateSubmission turns a direct variant=proposed on recognized
+       text away with not_proposable. */
+    const propose = form.get('propose') === '1'
     const trimmed = input.text.trim()
     if (input.variant === 'auto' && trimmed.length <= MAX_TEXT_LENGTH)
-      input.variant = detect(trimmed)[0]?.variant ?? 'auto'
+      input.variant = detect(trimmed)[0]?.variant ?? (propose ? PROPOSED_VARIANT : 'auto')
 
     const errors = validateSubmission(input)
     if (errors.length > 0) return fail(400, { input, messages: errors.map(errorMessage) })
@@ -45,6 +51,6 @@ export const actions: Actions = {
       })
 
     const { id, deleteToken } = await insertQuote(db, input)
-    return { submitted: { id, deleteToken } }
+    return { submitted: { id, deleteToken, proposed: input.variant === PROPOSED_VARIANT } }
   },
 }

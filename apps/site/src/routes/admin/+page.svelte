@@ -1,14 +1,36 @@
 <script lang="ts">
 import type { VariantId } from '@ratherthan/detector'
 import { invalidateAll } from '$app/navigation'
+import { PROPOSED_VARIANT } from '$lib/proposed.ts'
 import { mintCard } from '$lib/card-render.ts'
 import AdminItem from './AdminItem.svelte'
 
 let { data, form } = $props()
 
-const publicQueue = $derived(data.pending.filter((q) => q.source !== 'log_import'))
-const backlog = $derived(data.pending.filter((q) => q.source === 'log_import'))
-const split = $derived(publicQueue.length > 0 && backlog.length > 0)
+/* Mail, proposals, diary — the same order listPending serves them in.
+   Rendering iterates this list, so a fourth bucket is one entry here. */
+const sections = $derived(
+  [
+    {
+      title: 'public submissions',
+      short: 'public',
+      items: data.pending.filter(
+        (q) => q.source !== 'log_import' && q.variant !== PROPOSED_VARIANT,
+      ),
+    },
+    {
+      title: 'proposed acquisitions',
+      short: 'proposed',
+      items: data.pending.filter((q) => q.variant === PROPOSED_VARIANT),
+    },
+    {
+      title: 'the backlog',
+      short: 'backlog',
+      items: data.pending.filter((q) => q.source === 'log_import'),
+    },
+  ].filter((section) => section.items.length > 0),
+)
+const split = $derived(sections.length > 1)
 
 /* Backfill + re-mint after edits or a style bump: prints every published
    specimen whose postcard is missing or stale, right here in the browser. */
@@ -40,7 +62,7 @@ async function mintAll() {
   <h1>Moderation queue</h1>
   <span class="remaining">
     {#if split}
-      {publicQueue.length} public · {backlog.length} backlog
+      {sections.map((s) => `${s.items.length} ${s.short}`).join(' · ')}
     {:else}
       {data.pending.length} awaiting judgment
     {/if}
@@ -69,17 +91,13 @@ async function mintAll() {
 {#if data.pending.length === 0}
   <p>Queue is empty. The museum rests.</p>
 {:else}
-  {#if split}
-    <h2 class="section">public submissions</h2>
-  {/if}
-  {#each publicQueue as quote, i (quote.id)}
-    <AdminItem {quote} known={data.known} heroPreview={i === 0} />
-  {/each}
-  {#if split}
-    <h2 class="section">the backlog</h2>
-  {/if}
-  {#each backlog as quote, i (quote.id)}
-    <AdminItem {quote} known={data.known} heroPreview={publicQueue.length === 0 && i === 0} />
+  {#each sections as section, s (section.title)}
+    {#if split}
+      <h2 class="section">{section.title}</h2>
+    {/if}
+    {#each section.items as quote, i (quote.id)}
+      <AdminItem {quote} known={data.known} heroPreview={s === 0 && i === 0} />
+    {/each}
   {/each}
 {/if}
 

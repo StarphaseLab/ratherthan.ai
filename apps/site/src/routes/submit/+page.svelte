@@ -44,6 +44,23 @@ const almostGated = $derived(unrecognized && isNearMiss(text))
 /* Same screen the server enforces, run before anything is sent — flagged
    text never has to leave the machine at all. */
 const flagged = $derived(hasText ? sensitiveReasons(text) : [])
+/* One ladder, read twice: the hint line renders it, and the offer appears
+   exactly on its 'unrecognized' rung. The curator's rule — a near-miss
+   teaches before the door opens, flagged text gets no door — lives in the
+   rung order, so the two can never disagree. */
+const hint = $derived(
+  flagged.length > 0
+    ? 'flagged'
+    : almostGated
+      ? 'near-miss'
+      : unrecognized
+        ? 'unrecognized'
+        : detected.length > 0
+          ? 'detected'
+          : 'empty',
+)
+const offerProposal = $derived(hint === 'unrecognized')
+
 const REASON_LABELS: Record<string, string> = {
   url: 'a URL',
   email: 'an email address',
@@ -74,10 +91,19 @@ $effect(() => {
 
 {#if form?.submitted}
   <div class="success">
-    <p>
-      Accepted into the moderation queue. If a human curator finds it worthy, it will appear in the
-      museum.
-    </p>
+    {#if form.submitted.proposed}
+      <p>
+        Filed as a proposed acquisition. The curator examines every proposal, slowly — coining a
+        family means building its detector before its first specimen can hang, so proposals wait
+        longer than recognized submissions and most will not hang at all. The museum thanks you for
+        treating its taxonomy as unfinished. Your deletion token works the same as ever.
+      </p>
+    {:else}
+      <p>
+        Accepted into the moderation queue. If a human curator finds it worthy, it will appear in
+        the museum.
+      </p>
+    {/if}
     <div class="token-block">
       <p>
         <strong>Your anonymous deletion token</strong> — save it now, it is shown exactly once and
@@ -134,16 +160,16 @@ $effect(() => {
         bind:value={text}
       ></textarea>
       <!-- Always rendered: reserved line, so the form never jumps as hints change. -->
-      <span class="hint" class:bad={flagged.length > 0} class:ok={flagged.length === 0 && detected.length > 0}>
-        {#if flagged.length > 0}
+      <span class="hint" class:bad={hint === 'flagged'} class:ok={hint === 'detected'}>
+        {#if hint === 'flagged'}
           looks private ({flagged.map((r) => REASON_LABELS[r] ?? r).join(', ')}) — edit it out
           rather than making it public
-        {:else if almostGated}
+        {:else if hint === 'near-miss'}
           almost — “not just” or “not another” counts only when a dash or comma sets it off, as in
           “a real refactor, not another prompt tweak”
-        {:else if unrecognized}
+        {:else if hint === 'unrecognized'}
           no contrastive phrase recognized yet — try “rather than” or “instead of”
-        {:else if detected.length > 0}
+        {:else if hint === 'detected'}
           detected: {matches[0]?.phrase.toLowerCase()}
         {/if}
       </span>
@@ -218,6 +244,22 @@ $effect(() => {
       >submit rather than hoard</button
     >
 
+    <!-- The wall grows a door. Wording is the curator's, em-dash licensed;
+         "our gap rather than your error" is the whole feature. -->
+    {#if offerProposal}
+      <div class="offer">
+        <p>
+          The museum doesn’t recognize this phrasing. That may be our gap rather than your error —
+          the collection has {familyIds.length} named families and knows there are more. Offer it as
+          a <strong>proposed acquisition</strong>: the curator examines every proposal, and if yours
+          names a new family, it hangs as the founding specimen.
+        </p>
+        <button type="submit" name="propose" value="1" class="propose" disabled={submitting}>
+          offer it to the curator
+        </button>
+      </div>
+    {/if}
+
     <!-- Free text with suggestions from the published corpus: the curated
          spellings are the canonical ones. Leaving a field empty is always a
          valid answer — the museum shows "an anonymous agent". -->
@@ -233,16 +275,6 @@ $effect(() => {
   </form>
 
   <p class="api-note">prefer the terminal? the API is one POST — see <a href="/about#api">about</a>.</p>
-
-  <!-- The taxonomy gate cuts both ways: a genuinely new shape has no variant
-       to detect. Rare specimens deserve a door, not a wall. -->
-  <p class="api-note">
-    caught a shape the museum doesn’t collect yet? propose a new variant:
-    <a
-      href="mailto:curator@ratherthan.ai?subject=New%20variant%20proposal&body=The%20specimen%20(verbatim%2C%20reviewed%20for%20anything%20private)%3A%0A%0AWhere%20it%20was%20observed%20(model%2C%20integration)%3A%0A"
-      >curator@ratherthan.ai</a
-    > — the curator examines every specimen.
-  </p>
 {/if}
 
 <style>
@@ -384,5 +416,28 @@ $effect(() => {
   }
   .hint.bad {
     color: var(--reject);
+  }
+  /* A door, not a wall: framed like the museum's panels, never like an error. */
+  .offer {
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    background: var(--panel);
+    padding: 0.85rem 1rem;
+    font-size: 0.9rem;
+  }
+  .offer p {
+    margin: 0 0 0.75rem;
+    color: var(--dim);
+  }
+  .offer strong {
+    color: var(--text);
+    font-weight: 700;
+  }
+  .propose {
+    background: none;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-weight: 400;
   }
 </style>

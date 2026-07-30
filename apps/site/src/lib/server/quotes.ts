@@ -1,6 +1,7 @@
 import type { D1Database } from '@cloudflare/workers-types'
 import { detect, sensitiveReasons, VARIANTS, type VariantId } from '@ratherthan/detector'
 import { MAX_LABEL_LENGTH, MAX_PLAQUE_LENGTH, MAX_TEXT_LENGTH } from '$lib/limits.ts'
+import { type PendingVariant, PROPOSED_VARIANT } from '$lib/proposed.ts'
 import { REACTION_KINDS, type ReactionKind } from '$lib/reactions.ts'
 import { randomId, sha256Hex } from './crypto.ts'
 
@@ -27,8 +28,10 @@ export interface SubmissionInput {
 
 export type ValidationError =
   | { field: 'text'; code: 'empty' | 'too_long' | 'no_match' | 'sensitive'; detail?: string }
-  | { field: 'variant'; code: 'unknown' }
+  | { field: 'variant'; code: 'unknown' | 'not_proposable' }
   | { field: 'labels'; code: 'too_long' }
+
+export { PROPOSED_VARIANT }
 
 /**
  * Server-side validation. This is the second line of defense — the primary
@@ -45,7 +48,11 @@ export function validateSubmission(input: SubmissionInput): ValidationError[] {
     if (sensitive.length > 0)
       errors.push({ field: 'text', code: 'sensitive', detail: sensitive.join(', ') })
     const matches = detect(text)
-    if (matches.length === 0) errors.push({ field: 'text', code: 'no_match' })
+    if (input.variant === PROPOSED_VARIANT) {
+      /* A proposal is only honest while the detector has no name for the
+         phrase — recognized specimens submit under their family. */
+      if (matches.length > 0) errors.push({ field: 'variant', code: 'not_proposable' })
+    } else if (matches.length === 0) errors.push({ field: 'text', code: 'no_match' })
     else if (!(input.variant in VARIANTS) || !matches.some((m) => m.variant === input.variant))
       errors.push({ field: 'variant', code: 'unknown' })
   }
@@ -73,6 +80,8 @@ export function errorMessage(error: ValidationError): string {
       return `The text looks like it contains something private (${error.detail}). Please edit it out — the museum wants the rhetoric, not your infrastructure.`
     case 'unknown':
       return 'Pick the phrase variant that actually appears in the quote.'
+    case 'not_proposable':
+      return 'The museum recognizes this phrasing — submit it under its family; proposals are for shapes without a name.'
   }
 }
 
@@ -219,9 +228,21 @@ export async function listCompanions(db: D1Database, excludeId: string): Promise
   return results.map(toQuote)
 }
 
+/**
+ * Where /random lands: one of the museum's best-received pieces, not any
+ * page of the catalog. A visitor following "another specimen" is being
+ * shown around — hand them a highlight; the archive is one click away.
+ * The pool of 12 keeps repeat rolls from feeling like a loop.
+ */
 export async function randomPublishedId(db: D1Database): Promise<string | null> {
   const row = await db
-    .prepare(`SELECT id FROM quotes WHERE status = 'published' ORDER BY RANDOM() LIMIT 1`)
+    .prepare(
+      `SELECT id FROM (
+         SELECT q.id FROM quotes q WHERE q.status = 'published'
+         ORDER BY (SELECT COUNT(*) FROM reactions r WHERE r.quote_id = q.id) DESC, q.created_at DESC
+         LIMIT 12
+       ) ORDER BY RANDOM() LIMIT 1`,
+    )
     .first<{ id: string }>()
   return row?.id ?? null
 }
@@ -359,17 +380,24 @@ export async function establishedLabels(db: D1Database) {
 }
 
 export async function listPending(db: D1Database, limit = 100) {
-  /* Public submissions outrank the curator's own backlog (log_import):
-     a stranger waiting on judgment beats a specimen we mined ourselves.
-     queued_at (nudged by passToEnd) falls back to created_at when unset. */
+  /* The museum reads its mail before its diary: strangers' recognized
+     submissions first, then their proposed acquisitions, then the curator's
+     own backlog (log_import). queued_at (nudged by passToEnd) falls back
+     to created_at when unset. */
   const { results } = await db
     .prepare(
       `SELECT id, text, variant, model, provider, integration, source, created_at
        FROM quotes WHERE status = 'pending'
-       ORDER BY (source = 'log_import') ASC, COALESCE(queued_at, created_at) ASC LIMIT ?`,
+       ORDER BY CASE WHEN source = 'log_import' THEN 2 WHEN variant = ? THEN 1 ELSE 0 END ASC,
+                COALESCE(queued_at, created_at) ASC LIMIT ?`,
     )
-    .bind(limit)
-    .all<Omit<QuoteQueryRow, 'reaction_counts'> & { source: string }>()
+    .bind(PROPOSED_VARIANT, limit)
+    .all<
+      Omit<QuoteQueryRow, 'reaction_counts' | 'variant'> & {
+        source: string
+        variant: PendingVariant
+      }
+    >()
   return results
 }
 
@@ -403,6 +431,14 @@ export async function moderate(
 
   const text = (editedText ?? row.text).trim()
   const matches = detect(text)
+  /* A proposal publishes only after its family is coined: with no match the
+     re-detect below would keep variant 'proposed', which the proposal branch
+     of validateSubmission accepts — correct at the door, wrong on the wall. */
+  if (row.variant === PROPOSED_VARIANT && matches.length === 0)
+    return {
+      ok: false,
+      error: `Quote ${quoteId} is still a proposal — the detector has no family for it yet.`,
+    }
   const variant = matches.some((m) => m.variant === row.variant)
     ? row.variant
     : (matches[0]?.variant ?? row.variant)

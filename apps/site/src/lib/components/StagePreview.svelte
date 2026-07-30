@@ -1,13 +1,17 @@
 <script lang="ts">
 import { splitByVariant, VARIANTS, type VariantId } from '@ratherthan/detector'
+import type { PendingVariant } from '$lib/proposed.ts'
 import { pickSizes, SIZES, sideShare } from '$lib/stage-fit.ts'
 
-let { text, variant }: { text: string; variant: VariantId } = $props()
+/* PendingVariant, not VariantId: the admin preview stages proposals too.
+   splitByVariant guards unknown ids itself (!meta → null), so an unnamed
+   specimen renders plain with its variant id as the label. */
+let { text, variant }: { text: string; variant: PendingVariant } = $props()
 
 const split = $derived(
-  splitByVariant(text, variant) ?? {
+  splitByVariant(text, variant as VariantId) ?? {
     left: text,
-    phrase: VARIANTS[variant]?.label ?? variant,
+    phrase: VARIANTS[variant as VariantId]?.label ?? variant,
     right: '',
   },
 )
