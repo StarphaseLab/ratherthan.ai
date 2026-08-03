@@ -3,7 +3,6 @@ import { detect, sensitiveReasons, VARIANTS, type VariantId } from '@ratherthan/
 import { MAX_LABEL_LENGTH, MAX_PLAQUE_LENGTH, MAX_TEXT_LENGTH } from '$lib/limits.ts'
 import { type PendingVariant, PROPOSED_VARIANT } from '$lib/proposed.ts'
 import { REACTION_KINDS, type ReactionKind } from '$lib/reactions.ts'
-import { HOUSE_SOURCE } from '$lib/sources.ts'
 import { randomId, sha256Hex } from './crypto.ts'
 
 export interface QuoteRow {
@@ -450,18 +449,18 @@ export async function moderate(
   /* Re-assert status = 'pending' in the UPDATE: if another tab published or
      rejected between the SELECT above and here, changes is 0 and we report
      the miss instead of a phantom success. */
-  /* HOUSE_SOURCE marks a specimen the museum submitted to itself — set here
-     because nothing about a submitter is stored at submission time, so the
-     moderation desk is the only honest moment to record it. Internal: never
-     shown to visitors, by the director's ruling. */
+  /* The house flag marks a specimen the museum submitted to itself — set
+     here because nothing about a submitter is stored at submission time, so
+     the moderation desk is the only honest moment to record it. NULL leaves
+     the existing value alone. Internal: never shown to visitors, by the
+     director's ruling. */
   const published = await db
     .prepare(
-      `UPDATE quotes SET text = ?1, variant = ?2, status = 'published',
-         approved_at = datetime('now'),
-         source = CASE WHEN ?4 THEN ?5 ELSE source END
-       WHERE id = ?3 AND status = 'pending'`,
+      `UPDATE quotes SET text = ?, variant = ?, status = 'published',
+         approved_at = datetime('now'), house = COALESCE(?, house)
+       WHERE id = ? AND status = 'pending'`,
     )
-    .bind(text, variant, quoteId, house ? 1 : 0, HOUSE_SOURCE)
+    .bind(text, variant, house ? 1 : null, quoteId)
     .run()
   return published.meta.changes > 0
     ? { ok: true }

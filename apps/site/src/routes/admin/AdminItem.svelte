@@ -5,7 +5,6 @@ import { mintCard } from '$lib/card-render.ts'
 import StagePreview from '$lib/components/StagePreview.svelte'
 import { MAX_TEXT_LENGTH } from '$lib/limits.ts'
 import { type PendingVariant, PROPOSED_VARIANT } from '$lib/proposed.ts'
-import { HOUSE_SOURCE } from '$lib/sources.ts'
 
 interface PendingQuote {
   id: string
@@ -14,7 +13,6 @@ interface PendingQuote {
   model: string | null
   provider: string | null
   integration: string | null
-  source: string
   created_at: string
 }
 
@@ -104,10 +102,11 @@ const stillProposal = $derived(quote.variant === PROPOSED_VARIANT && noMatch)
       </span>
       <span class="buttons">
         <!-- Nothing about a submitter is stored at submission time, so this
-             desk is the only honest moment to record "that one was us".
+             desk is the only honest moment to record "that one was us". Read
+             on publish only; a rejected specimen needs no provenance.
              Internal bookkeeping; visitors never see it. -->
-        <label class="house" title="Mark as the museum's own submission — internal only">
-          <input type="checkbox" name="house" value="1" checked={quote.source === HOUSE_SOURCE} />
+        <label class="house" title="Mark as the museum's own submission — recorded on publish, internal only">
+          <input type="checkbox" name="house" value="1" />
           the museum’s own
         </label>
         {#if !stillProposal}

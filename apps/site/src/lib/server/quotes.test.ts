@@ -1,7 +1,7 @@
 import type { D1Database } from '@cloudflare/workers-types'
 import { describe, expect, it } from 'vitest'
 import { MAX_TEXT_LENGTH } from '$lib/limits.ts'
-import { HOUSE_SOURCE } from '$lib/sources.ts'
+
 import {
   moderate,
   PROPOSED_VARIANT,
@@ -12,6 +12,24 @@ import {
 const valid = {
   text: "I'll inspect the actual logs rather than speculate.",
   variant: 'rather_than',
+}
+
+/* moderate() only needs prepare().bind().first/run — a hand stub stands in
+   for D1: first() serves the pending row, run() records what would land. */
+const fakeDb = (row: { text: string; variant: string }) => {
+  const writes: unknown[][] = []
+  const db = {
+    prepare: () => ({
+      bind: (...args: unknown[]) => ({
+        first: async () => row,
+        run: async () => {
+          writes.push(args)
+          return { meta: { changes: 1 } }
+        },
+      }),
+    }),
+  }
+  return { db: db as unknown as D1Database, writes }
 }
 
 describe('validateSubmission', () => {
@@ -88,24 +106,6 @@ describe('proposed acquisitions', () => {
     expect(result.some((e) => e.code === 'sensitive')).toBe(true)
   })
 
-  /* moderate() only needs prepare().bind().first/run — a hand stub stands in
-     for D1: first() serves the pending row, run() records what would land. */
-  const fakeDb = (row: { text: string; variant: string }) => {
-    const writes: unknown[][] = []
-    const db = {
-      prepare: () => ({
-        bind: (...args: unknown[]) => ({
-          first: async () => row,
-          run: async () => {
-            writes.push(args)
-            return { meta: { changes: 1 } }
-          },
-        }),
-      }),
-    }
-    return { db: db as unknown as D1Database, writes }
-  }
-
   it('refuses to publish a proposal the detector cannot name (forged form path)', async () => {
     const { db, writes } = fakeDb({ text: unnamed, variant: PROPOSED_VARIANT })
     const result = await moderate(db, 'x1', 'published')
@@ -123,33 +123,19 @@ describe('proposed acquisitions', () => {
 })
 
 describe("the museum's own submissions", () => {
-  const fakeDb = (row: { text: string; variant: string }) => {
-    const writes: unknown[][] = []
-    const db = {
-      prepare: () => ({
-        bind: (...args: unknown[]) => ({
-          first: async () => row,
-          run: async () => {
-            writes.push(args)
-            return { meta: { changes: 1 } }
-          },
-        }),
-      }),
-    }
-    return { db: db as unknown as D1Database, writes }
+  /* The house flag is bound third; NULL is COALESCE's "leave it alone". */
+  const houseArg = async (house?: boolean) => {
+    const { db, writes } = fakeDb({ text: valid.text, variant: 'rather_than' })
+    await moderate(db, 'h1', 'published', undefined, house)
+    return writes[0]?.[2]
   }
 
-  it('flags the source when the curator marks a publish as the house’s own', async () => {
-    const { db, writes } = fakeDb({ text: valid.text, variant: 'rather_than' })
-    await moderate(db, 'h1', 'published', undefined, true)
-    expect(writes[0]).toEqual([valid.text, 'rather_than', 'h1', 1, HOUSE_SOURCE])
+  it('flags the specimen when the curator marks a publish as the house’s own', async () => {
+    expect(await houseArg(true)).toBe(1)
   })
 
-  it('leaves a visitor’s submission untouched when the box is clear', async () => {
-    const { db, writes } = fakeDb({ text: valid.text, variant: 'rather_than' })
-    await moderate(db, 'h2', 'published')
-    /* 0 makes the CASE fall through to source — the existing value stands. */
-    expect(writes[0]).toEqual([valid.text, 'rather_than', 'h2', 0, HOUSE_SOURCE])
+  it('leaves a visitor’s submission alone when the box is clear', async () => {
+    expect(await houseArg()).toBeNull()
   })
 })
 
