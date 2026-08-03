@@ -42,7 +42,13 @@ export const actions: Actions = {
       await passToEnd(db, id)
       return { ok: true }
     }
-    const result = await moderate(db, id, decision, typeof text === 'string' ? text : undefined)
+    const result = await moderate(
+      db,
+      id,
+      decision,
+      typeof text === 'string' ? text : undefined,
+      form.get('house') === '1',
+    )
     if (!result.ok) return fail(400, { id, message: result.error })
     return { ok: true }
   },

@@ -1,6 +1,7 @@
 import type { D1Database } from '@cloudflare/workers-types'
 import { describe, expect, it } from 'vitest'
 import { MAX_TEXT_LENGTH } from '$lib/limits.ts'
+import { HOUSE_SOURCE } from '$lib/sources.ts'
 import {
   moderate,
   PROPOSED_VARIANT,
@@ -118,6 +119,37 @@ describe('proposed acquisitions', () => {
     const result = await moderate(db, 'x2', 'published')
     expect(result.ok).toBe(true)
     expect(writes[0]).toContain('rather_than')
+  })
+})
+
+describe("the museum's own submissions", () => {
+  const fakeDb = (row: { text: string; variant: string }) => {
+    const writes: unknown[][] = []
+    const db = {
+      prepare: () => ({
+        bind: (...args: unknown[]) => ({
+          first: async () => row,
+          run: async () => {
+            writes.push(args)
+            return { meta: { changes: 1 } }
+          },
+        }),
+      }),
+    }
+    return { db: db as unknown as D1Database, writes }
+  }
+
+  it('flags the source when the curator marks a publish as the house’s own', async () => {
+    const { db, writes } = fakeDb({ text: valid.text, variant: 'rather_than' })
+    await moderate(db, 'h1', 'published', undefined, true)
+    expect(writes[0]).toEqual([valid.text, 'rather_than', 'h1', 1, HOUSE_SOURCE])
+  })
+
+  it('leaves a visitor’s submission untouched when the box is clear', async () => {
+    const { db, writes } = fakeDb({ text: valid.text, variant: 'rather_than' })
+    await moderate(db, 'h2', 'published')
+    /* 0 makes the CASE fall through to source — the existing value stands. */
+    expect(writes[0]).toEqual([valid.text, 'rather_than', 'h2', 0, HOUSE_SOURCE])
   })
 })
 

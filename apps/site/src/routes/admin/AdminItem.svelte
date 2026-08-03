@@ -5,6 +5,7 @@ import { mintCard } from '$lib/card-render.ts'
 import StagePreview from '$lib/components/StagePreview.svelte'
 import { MAX_TEXT_LENGTH } from '$lib/limits.ts'
 import { type PendingVariant, PROPOSED_VARIANT } from '$lib/proposed.ts'
+import { HOUSE_SOURCE } from '$lib/sources.ts'
 
 interface PendingQuote {
   id: string
@@ -13,6 +14,7 @@ interface PendingQuote {
   model: string | null
   provider: string | null
   integration: string | null
+  source: string
   created_at: string
 }
 
@@ -101,6 +103,13 @@ const stillProposal = $derived(quote.variant === PROPOSED_VARIANT && noMatch)
         · #{quote.id}
       </span>
       <span class="buttons">
+        <!-- Nothing about a submitter is stored at submission time, so this
+             desk is the only honest moment to record "that one was us".
+             Internal bookkeeping; visitors never see it. -->
+        <label class="house" title="Mark as the museum's own submission — internal only">
+          <input type="checkbox" name="house" value="1" checked={quote.source === HOUSE_SOURCE} />
+          the museum’s own
+        </label>
         {#if !stillProposal}
           <button name="decision" value="published" class="approve" disabled={busy || noMatch}>
             publish
@@ -163,12 +172,30 @@ const stillProposal = $derived(quote.variant === PROPOSED_VARIANT && noMatch)
     font-weight: 400;
     font-style: italic;
   }
+  /* Sits with the buttons but reads as a note, not an action. */
+  .house {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--dim);
+    font-size: 0.75rem;
+    cursor: pointer;
+    user-select: none;
+  }
+  .house:hover {
+    color: var(--text);
+  }
+  .house input {
+    cursor: pointer;
+  }
   .novel {
     color: var(--reject);
   }
   .buttons {
     display: flex;
+    align-items: center;
     gap: 0.5rem;
+    flex-wrap: wrap;
   }
   button {
     border: none;
