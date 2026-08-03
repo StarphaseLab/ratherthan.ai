@@ -40,7 +40,9 @@ describe('specimen card response', () => {
     expect(response.status).toBe(200)
     expect(response.headers.get('content-type')).toBe('image/png')
     expect(response.headers.get('content-length')).toBe(String(CARD.byteLength))
-    expect(response.headers.get('cache-control')).toBe('public, max-age=86400')
+    /* Short, so a re-mint is not hidden behind a day of edge cache — the
+       postcard download reads this route. */
+    expect(response.headers.get('cache-control')).toBe('public, max-age=300')
     expect(response.headers.get('etag')).toBe('"specimen:2026-07-23T12:34:56.789Z"')
     expect(response.headers.has('set-cookie')).toBe(false)
     expect(new Uint8Array(await response.arrayBuffer())).toEqual(new Uint8Array(CARD))
@@ -55,6 +57,7 @@ describe('specimen card response', () => {
 
     expect(response.status).toBe(304)
     expect(response.headers.get('etag')).toBe(etag)
+    expect(response.headers.get('cache-control')).toBe('public, max-age=300')
     expect((await response.arrayBuffer()).byteLength).toBe(0)
   })
 

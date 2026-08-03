@@ -43,9 +43,15 @@ async function houseCard(event: CardEvent, reason: string): Promise<Response> {
  * minted. Where the assets binding is absent (some dev setups) we fall back to
  * the old redirect.
  *
- * Minted cards get a day-long edge cache: after a deletion, stray copies age
- * out worldwide within 24h (our origin forgets instantly).
+ * Minted cards get a short edge cache. This route is no longer the hot path
+ * — og:image points at the immutable R2 object once a card is minted, and
+ * that URL changes with the pixels. What is left here is the postcard
+ * download and legacy links, where a stale copy is a wrong souvenir: a
+ * re-mint took 24h to appear (2026-08-03, a restored specimen). Five
+ * minutes also propagates deletions faster than the old day-long TTL, and
+ * the ETag keeps repeat fetches to a 304.
  */
+const MINTED_CACHE_CONTROL = 'public, max-age=300'
 export const GET: RequestHandler = async (event) => {
   const db = event.platform?.env?.DB
   if (!db) return houseCard(event, 'db_unavailable')
@@ -60,7 +66,10 @@ export const GET: RequestHandler = async (event) => {
 
   const etag = `"${event.params.id}:${card.minted_at}"`
   if (event.request.headers.get('if-none-match') === etag)
-    return new Response(null, { status: 304, headers: { etag } })
+    return new Response(null, {
+      status: 304,
+      headers: { etag, 'cache-control': MINTED_CACHE_CONTROL },
+    })
 
   console.info(JSON.stringify({ event: 'card_origin', id: event.params.id, image: 'minted' }))
 
@@ -68,7 +77,7 @@ export const GET: RequestHandler = async (event) => {
     headers: {
       'content-type': 'image/png',
       'content-length': String(card.png.byteLength),
-      'cache-control': 'public, max-age=86400',
+      'cache-control': MINTED_CACHE_CONTROL,
       etag,
     },
   })
