@@ -1,8 +1,10 @@
 import type { D1Database } from '@cloudflare/workers-types'
 import { detect, sensitiveReasons, VARIANTS, type VariantId } from '@ratherthan/detector'
+import type { Cookies } from '@sveltejs/kit'
 import { MAX_LABEL_LENGTH, MAX_PLAQUE_LENGTH, MAX_TEXT_LENGTH } from '$lib/limits.ts'
 import { type PendingVariant, PROPOSED_VARIANT } from '$lib/proposed.ts'
-import { REACTION_KINDS, type ReactionKind } from '$lib/reactions.ts'
+import { REACTION_KINDS, type ReactionKind, voteKey } from '$lib/reactions.ts'
+import { VOTER_COOKIE, voterHash } from './context.ts'
 import { randomId, sha256Hex } from './crypto.ts'
 
 export interface QuoteRow {
@@ -245,6 +247,33 @@ export async function randomPublishedId(db: D1Database): Promise<string | null> 
     )
     .first<{ id: string }>()
   return row?.id ?? null
+}
+
+/**
+ * The visitor's own votes, as "specimen:kind" keys, so a pill can show that
+ * the vote is theirs. Reads an existing ticket and never issues one: a page
+ * load must not make a voter of someone who has only ever looked, so a
+ * ticketless visitor costs an empty set and no query at all.
+ *
+ * Every vote they hold, not just this page's: the stage rotates through the
+ * whole collection client-side, so a page-scoped answer would go stale as
+ * the visitor browses without asking the server again.
+ *
+ * Whatever renders this is personal to one visitor — the loads that call it
+ * mark the response uncacheable.
+ */
+export async function ownReactions(
+  db: D1Database,
+  cookies: Pick<Cookies, 'get'>,
+  salt: string,
+): Promise<Set<string>> {
+  const voter = cookies.get(VOTER_COOKIE)
+  if (!voter) return new Set()
+  const { results } = await db
+    .prepare(`SELECT quote_id, kind FROM reactions WHERE voter_hash = ?`)
+    .bind(await voterHash(voter, salt))
+    .all<{ quote_id: string; kind: ReactionKind }>()
+  return new Set(results.map((row) => voteKey(row.quote_id, row.kind)))
 }
 
 /** Toggle a reaction; returns whether it is now set on a published quote. */

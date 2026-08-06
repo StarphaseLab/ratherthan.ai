@@ -50,6 +50,7 @@ function onKey(event: KeyboardEvent) {
   idHref="/q/{data.quote.id}"
   copyPath="/frames/{data.quote.id}"
   postcard={Boolean(data.cardKey)}
+  mine={data.mine}
 />
 
 <p class="back"><a href="/">← back to the museum</a></p>

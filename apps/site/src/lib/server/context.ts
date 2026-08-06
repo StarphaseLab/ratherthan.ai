@@ -1,6 +1,6 @@
 import type { D1Database, KVNamespace, R2Bucket } from '@cloudflare/workers-types'
 import { type Cookies, error, type RequestEvent } from '@sveltejs/kit'
-import { randomId } from './crypto.ts'
+import { randomId, sha256Hex } from './crypto.ts'
 
 export interface Ctx {
   db: D1Database
@@ -34,6 +34,13 @@ export function clientIp(event: RequestEvent): string {
 }
 
 export const VOTER_COOKIE = 'rt_voter'
+
+/**
+ * The one recipe for turning a voter's ticket into the identity stored in
+ * `reactions`. Both the vote and the reading of it must spell this the same
+ * way, or a visitor's own votes stop being recognizable as theirs.
+ */
+export const voterHash = (voter: string, salt: string): Promise<string> => sha256Hex(voter + salt)
 
 /** Create anonymous voter identity only when someone actually votes. */
 export function getOrCreateVoter(cookies: Pick<Cookies, 'get' | 'set'>): string {

@@ -2,8 +2,10 @@ import type { D1Database } from '@cloudflare/workers-types'
 import { describe, expect, it } from 'vitest'
 import { MAX_TEXT_LENGTH } from '$lib/limits.ts'
 
+import { voterHash } from './context.ts'
 import {
   moderate,
+  ownReactions,
   PROPOSED_VARIANT,
   randomPositionForVariant,
   validateSubmission,
@@ -136,6 +138,46 @@ describe("the museum's own submissions", () => {
 
   it('leaves a visitor’s submission alone when the box is clear', async () => {
     expect(await houseArg()).toBeNull()
+  })
+})
+
+describe('ownReactions', () => {
+  const rows = [
+    { quote_id: 'a1', kind: 'peak_agent' },
+    { quote_id: 'a1', kind: 'actually_funny' },
+    { quote_id: 'b2', kind: 'useful_contrast' },
+  ]
+  const reactionsDb = () => {
+    const queries: unknown[][] = []
+    const db = {
+      prepare: () => ({
+        bind: (...args: unknown[]) => {
+          queries.push(args)
+          return { all: async () => ({ results: rows }) }
+        },
+      }),
+    }
+    return { db: db as unknown as D1Database, queries }
+  }
+
+  it('keys every vote by specimen and kind', async () => {
+    const { db } = reactionsDb()
+    const mine = await ownReactions(db, { get: () => 'ticket' }, 'salt')
+    expect([...mine].sort()).toEqual(['a1:actually_funny', 'a1:peak_agent', 'b2:useful_contrast'])
+  })
+
+  /* The privacy claim of the whole feature: looking is not voting. */
+  it('asks the database nothing for a visitor holding no ticket', async () => {
+    const { db, queries } = reactionsDb()
+    const mine = await ownReactions(db, { get: () => undefined }, 'salt')
+    expect(mine.size).toBe(0)
+    expect(queries).toEqual([])
+  })
+
+  it('reads votes under the same hash the vote was written with', async () => {
+    const { db, queries } = reactionsDb()
+    await ownReactions(db, { get: () => 'ticket' }, 'salt')
+    expect(queries[0]).toEqual([await voterHash('ticket', 'salt')])
   })
 })
 

@@ -14,7 +14,11 @@ import { isTypingTarget } from '$lib/keys.ts'
 import type { QuoteRow } from '$lib/server/quotes.ts'
 import { pickSizes, SIZES, sideShare } from '$lib/stage-fit.ts'
 
-let { quotes, initialPosition }: { quotes: QuoteRow[]; initialPosition: number } = $props()
+let {
+  quotes,
+  initialPosition,
+  mine = new Set<string>(),
+}: { quotes: QuoteRow[]; initialPosition: number; mine?: ReadonlySet<string> } = $props()
 
 /* The server deals the opening specimen so SSR and hydration render the same
    quote. Fall back to the first shape this page actually stocks — a hard-coded
@@ -317,7 +321,7 @@ function onKey(event: KeyboardEvent) {
       </span>
     </div>
 
-    <ReactionPills quote={current} action="/q/{current.id}?/react" />
+    <ReactionPills quote={current} action="/q/{current.id}?/react" {mine} />
 
     <div class="nav-sep" aria-hidden="true"></div>
 

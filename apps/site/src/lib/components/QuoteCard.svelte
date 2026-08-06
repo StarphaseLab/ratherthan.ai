@@ -3,10 +3,10 @@ import { splitByVariant } from '@ratherthan/detector'
 import { enhance } from '$app/forms'
 import { attributionLabel } from '$lib/attribution.ts'
 import { ReactionNotice } from '$lib/reaction-notice.svelte.ts'
-import { REACTION_KINDS, REACTION_META } from '$lib/reactions.ts'
+import { REACTION_KINDS, REACTION_META, VOTED_HINT, voteKey } from '$lib/reactions.ts'
 import type { QuoteRow } from '$lib/server/quotes.ts'
 
-let { quote }: { quote: QuoteRow } = $props()
+let { quote, mine = new Set<string>() }: { quote: QuoteRow; mine?: ReadonlySet<string> } = $props()
 
 const notice = new ReactionNotice()
 
@@ -34,9 +34,15 @@ const label = $derived(attributionLabel(quote))
   <div class="reactions">
     {#each REACTION_KINDS as kind (kind)}
       {@const meta = REACTION_META[kind]}
+      {@const voted = mine.has(voteKey(quote.id, kind))}
       <form method="POST" action="/q/{quote.id}?/react" use:enhance={notice.submit}>
         <input type="hidden" name="kind" value={kind} />
-        <button title="{meta.label} — {meta.hint}" aria-label={meta.label}>
+        <button
+          class:voted
+          aria-pressed={voted}
+          title="{meta.label} — {meta.hint}{voted ? VOTED_HINT : ''}"
+          aria-label={meta.label}
+        >
           <svg class="ic" aria-hidden="true"><use href="#reaction-{kind}" /></svg>
           {#if quote.reactions[kind]}<span class="count">{quote.reactions[kind]}</span>{/if}
         </button>
@@ -98,6 +104,10 @@ const label = $derived(attributionLabel(quote))
     padding: 0.22rem 0.6rem;
     cursor: pointer;
     font-size: 0.8rem;
+  }
+  /* Your own vote: green border, label stays dim (see ReactionPills). */
+  .reactions button.voted {
+    border-color: var(--accent);
   }
   .reactions button:hover,
   .reactions button:focus-visible {

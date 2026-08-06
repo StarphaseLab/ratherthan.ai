@@ -1,21 +1,24 @@
 import { error, fail } from '@sveltejs/kit'
 import { REACTION_KINDS, type ReactionKind } from '$lib/reactions.ts'
 import { getCardObjectKey } from '$lib/server/cards.ts'
-import { clientIp, ctx, getOrCreateVoter } from '$lib/server/context.ts'
-import { sha256Hex } from '$lib/server/crypto.ts'
-import { getPublished, listCompanions, toggleReaction } from '$lib/server/quotes.ts'
+import { clientIp, ctx, getOrCreateVoter, voterHash } from '$lib/server/context.ts'
+import { getPublished, listCompanions, ownReactions, toggleReaction } from '$lib/server/quotes.ts'
 import { allowRequest } from '$lib/server/rate-limit.ts'
 import type { Actions, PageServerLoad } from './$types'
 
-export const load: PageServerLoad = async ({ platform, params }) => {
-  const { db } = ctx(platform)
-  const [quote, cardKey, companions] = await Promise.all([
+export const load: PageServerLoad = async ({ cookies, platform, params, setHeaders }) => {
+  const { db, salt } = ctx(platform)
+  const [quote, cardKey, companions, mine] = await Promise.all([
     getPublished(db, params.id),
     getCardObjectKey(db, params.id),
     listCompanions(db, params.id),
+    ownReactions(db, cookies, salt),
   ])
   if (!quote) throw error(404, 'No such specimen in the museum.')
-  return { quote, cardKey, companions }
+
+  /* See the home page: marked pills make the response personal. */
+  if (mine.size > 0) setHeaders({ 'cache-control': 'private, no-store' })
+  return { quote, cardKey, companions, mine }
 }
 
 export const actions: Actions = {
@@ -27,7 +30,7 @@ export const actions: Actions = {
     if (!(await allowRequest(rate, salt, 'react', clientIp(event), 60, 3600)))
       return fail(429, { message: 'Slow down — the museum appreciates your enthusiasm.' })
     const voter = getOrCreateVoter(event.cookies)
-    await toggleReaction(db, event.params.id, kind as ReactionKind, await sha256Hex(voter + salt))
+    await toggleReaction(db, event.params.id, kind as ReactionKind, await voterHash(voter, salt))
     return { ok: true }
   },
 }

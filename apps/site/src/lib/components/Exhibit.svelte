@@ -18,12 +18,14 @@ let {
   idHref,
   copyPath = `/q/${quote.id}`,
   postcard = false,
+  mine = new Set<string>(),
 }: {
   quote: QuoteRow
   reactAction: string
   idHref?: string
   copyPath?: string
   postcard?: boolean
+  mine?: ReadonlySet<string>
 } = $props()
 </script>
 
@@ -43,7 +45,7 @@ let {
   {/if}
 </p>
 
-<ReactionPills {quote} action={reactAction} />
+<ReactionPills {quote} action={reactAction} {mine} />
 
 {#if quote.plaque}
   <aside class="plaque">

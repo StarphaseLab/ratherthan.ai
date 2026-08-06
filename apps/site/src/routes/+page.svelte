@@ -30,7 +30,7 @@ function pageHref(sort: string, page: number) {
 
 <h1 class="sr-only">ratherthan.ai — a public museum of agent rhetoric</h1>
 
-<Hero quotes={data.heroPool} initialPosition={data.initialHeroPosition} />
+<Hero quotes={data.heroPool} initialPosition={data.initialHeroPosition} mine={data.mine} />
 
 <FollowLine />
 
@@ -59,7 +59,7 @@ function pageHref(sort: string, page: number) {
   </div>
 
   {#each data.quotes as quote (quote.id)}
-    <QuoteCard {quote} />
+    <QuoteCard {quote} mine={data.mine} />
   {:else}
     {#if data.page > 1}
       <p>The archive ends before page {data.page}. <a href="/">Back to the entrance</a>.</p>

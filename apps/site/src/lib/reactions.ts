@@ -8,6 +8,14 @@ export const REACTION_KINDS = [
 
 export type ReactionKind = (typeof REACTION_KINDS)[number]
 
+/* One flat set of "specimen:kind" keys carries a visitor's own votes from the
+   server to every surface that draws a pill — no per-specimen grouping, and
+   the same shape whether a page shows one exhibit or the whole archive. */
+export const voteKey = (quoteId: string, kind: ReactionKind) => `${quoteId}:${kind}`
+
+/** Said once, shown wherever a pill is already the visitor's. */
+export const VOTED_HINT = ' — yours; click again to withdraw'
+
 /* Glyphs live in ReactionGlyphs.svelte as <symbol id="reaction-<kind>">. */
 export const REACTION_META: Record<ReactionKind, { label: string; hint: string }> = {
   useful_contrast: {
