@@ -246,5 +246,55 @@
         "sentence": "We shipped a real integration — not just another wrapper around the API."
       }
     ]
+  },
+  {
+    "name": "disguise flagship — wearing a ground's clothes",
+    "text": "The card would be a verdict wearing a ground's clothes.",
+    "expect": [
+      {
+        "variant": "wearing_clothes",
+        "sentence": "The card would be a verdict wearing a ground's clothes."
+      }
+    ]
+  },
+  {
+    "name": "disguise — costume noun",
+    "text": "That reads as a governance question wearing a tax costume.",
+    "expect": [
+      {
+        "variant": "wearing_clothes",
+        "sentence": "That reads as a governance question wearing a tax costume."
+      }
+    ]
+  },
+  {
+    "name": "disguise — the wolf construction (in X’s clothing)",
+    "text": "It arrived as a rewrite in a refactor's clothing.",
+    "expect": [
+      {
+        "variant": "wearing_clothes",
+        "sentence": "It arrived as a rewrite in a refactor's clothing."
+      }
+    ]
+  },
+  {
+    "name": "disguise — dressed as",
+    "text": "It is a side-taking move dressed as an appeal to unity.",
+    "expect": [
+      {
+        "variant": "dressed_as",
+        "sentence": "It is a side-taking move dressed as an appeal to unity."
+      }
+    ]
+  },
+  {
+    "name": "disguise — dressed up as (sonnet form)",
+    "text": "I found none an expression shortfall dressed up as a format limit.",
+    "expect": [
+      {
+        "variant": "dressed_as",
+        "sentence": "I found none an expression shortfall dressed up as a format limit."
+      }
+    ]
   }
 ]

@@ -12,7 +12,7 @@ import ReactionPills from '$lib/components/ReactionPills.svelte'
 import { CopyFeedback } from '$lib/copy-link.svelte.ts'
 import { isTypingTarget } from '$lib/keys.ts'
 import type { QuoteRow } from '$lib/server/quotes.ts'
-import { pickSizes, SIZES, sideShare } from '$lib/stage-fit.ts'
+import { isLongAnchor, pickSizes, SIZES, sideShare } from '$lib/stage-fit.ts'
 
 let {
   quotes,
@@ -260,6 +260,7 @@ function onKey(event: KeyboardEvent) {
           {#key phraseKey}
             <button
               class="phrase"
+              class:long={isLongAnchor(split.phrase)}
               aria-haspopup={available.length > 1 ? 'menu' : undefined}
               aria-expanded={available.length > 1 ? menuOpen : undefined}
               title={available.length > 1 ? 'Switch phrase variant' : undefined}
@@ -512,6 +513,12 @@ function onKey(event: KeyboardEvent) {
     font-size: clamp(1.8rem, 5vw, 3.2rem);
     white-space: nowrap;
     cursor: pointer;
+  }
+  /* A span too long for one line at anchor size (see anchorSize). */
+  .phrase.long {
+    font-size: clamp(1.1rem, 3.2vw, 2rem);
+    white-space: normal;
+    text-wrap: balance;
   }
   .variants {
     position: absolute;

@@ -10,11 +10,16 @@
 
 /**
  * Families group variants by rhetorical shape:
- *  - pivot: one phrase splitting the chosen path from the rejected one.
- *  - vow:   a refusal of the bare minimum (won't just / without merely / not just).
+ *  - pivot:   one phrase splitting the chosen path from the rejected one.
+ *  - vow:     a refusal of the bare minimum (won't just / without merely / not just).
+ *  - disguise: a ruling on what something really is beneath the costume.
+ *
+ * The first two are the worker's voice, mid-task. The third is the critic's:
+ * it appears when an agent reviews, audits, or judges — which is why the
+ * museum keeps it as its own register rather than folding it into pivot.
  * Families are presentation metadata; the database only ever stores variant ids.
  */
-export type Family = 'pivot' | 'vow'
+export type Family = 'pivot' | 'vow' | 'disguise'
 
 export type VariantId =
   | 'rather_than'
@@ -24,15 +29,32 @@ export type VariantId =
   | 'without_merely'
   | 'not_just'
   | 'not_another'
+  | 'wearing_clothes'
+  | 'dressed_as'
 
 export const FAMILIES: Record<Family, { label: string; description: string }> = {
   pivot: { label: 'pivot', description: 'the chosen path, split from the rejected one' },
   vow: { label: 'vow', description: 'a refusal of the bare minimum' },
+  disguise: {
+    label: 'disguise',
+    description: 'a ruling on what something really is beneath the costume',
+  },
 }
 
 /* Every vow is a refusal built on the same minimizers; patterns share this
    alternation so the accepted adverb set can never drift between variants. */
 const MINIMIZERS = '(?:just|merely|simply)'
+
+/* What may sit between "wearing"/"in" and the garment: a short, lazy run of
+   word characters, spaces and possessives. Shared by both alternations of the
+   disguise pattern so the accepted gap can never drift between them (same
+   rationale as MINIMIZERS above), and bounded so backtracking stays local.
+   The lookahead is the whole trick: the class contains a space and follows
+   \s+, so without it the two quantifiers overlap and every backtrack position
+   in a whitespace run re-runs thirty lazy expansions. Requiring a non-space
+   first character costs nothing (\s+ has already eaten the gap) and measured
+   ~9x faster on adversarial space runs. */
+const GARMENT_GAP = "(?=\\S)[\\w'’ -]{1,30}?"
 
 /* The postfix-dismissal gate: bare "not just" / "not another" saturate
    innocent English, so they only count when a dash or comma sets them off.
@@ -114,9 +136,37 @@ export const VARIANTS: Record<
     pattern: gated(NOT_ANOTHER_CORE),
     forms: ['not another', 'not yet another', 'not one more'],
   },
+  wearing_clothes: {
+    label: 'wearing X’s clothes',
+    family: 'disguise',
+    /* The costume noun is the whole signal: "wearing thin" and "wearing down"
+       carry no garment and must not match. Both alternations bound their
+       middle by GARMENT_GAP so the two literal anchors stay close and
+       backtracking stays local — same ReDoS posture as every other pattern
+       here. The second is the wolf's own construction, the same ruling
+       without the verb; it rides here as a surface form rather than as its
+       own id, because the picker lists forms and a variant with no attested
+       specimen is inventory the museum has not been offered yet. */
+    pattern: new RegExp(
+      `\\bwear(?:ing|s)\\s+${GARMENT_GAP}(?:clothes|clothing|costume|uniform)\\b` +
+        `|\\bin\\s+${GARMENT_GAP}['’]s\\s+clothing\\b`,
+      'i',
+    ),
+    forms: ['wearing X’s clothes', 'wearing an X costume', 'in X’s clothing'],
+  },
+  dressed_as: {
+    label: 'dressed as',
+    family: 'disguise',
+    /* Ungated by decision: the corpus shows zero innocent uses in agent
+       speech — agents do not discuss literal clothing. The \b before
+       "dressed" is load-bearing: without it "addressed as" matches, which is
+       ordinary English and would poison the family on day one. */
+    pattern: /\bdressed\s+(?:up\s+)?as\b/i,
+    forms: ['dressed as', 'dressed up as'],
+  },
 }
 
-/** Variant ids in canonical presentation order (pivots first, then vows). */
+/** Variant ids in canonical presentation order: pivots, vows, then disguises. */
 export const VARIANT_IDS = Object.keys(VARIANTS) as VariantId[]
 
 const ANY_PHRASE = VARIANT_IDS.map((id) => VARIANTS[id].pattern.source).join('|')
@@ -212,10 +262,21 @@ export function detect(text: string): Match[] {
   return matches.sort((a, b) => a.index - b.index)
 }
 
+/* All that a phrase closing the sentence can leave behind: terminal marks and
+   the quotes or brackets that close around them, then nothing. */
+const CLOSING_TAIL = /^[.,;:!?…”"'’)\]]+\s*$/
+
 /**
  * Split a text around its variant phrase for display (anchored-keyword
  * rendering). Returns null when the phrase is absent so callers can fall
  * back to plain text.
+ *
+ * A phrase that ends the sentence takes its closing punctuation with it: a
+ * lone "." centred beneath the anchor, or floated off the end of a minted
+ * card, reads as a typo rather than as the sentence's full stop. The disguise
+ * family made this ordinary — "a verdict wearing a ground's clothes." ends on
+ * the costume — but it is a property of any specimen whose phrase comes last,
+ * and every surface that renders a split inherits the fix here.
  */
 export function splitByVariant(
   text: string,
@@ -225,10 +286,12 @@ export function splitByVariant(
   if (!meta) return null
   const match = new RegExp(meta.pattern.source, 'i').exec(text)
   if (!match) return null
+  const right = text.slice(match.index + match[0].length)
+  const tail = CLOSING_TAIL.exec(right)?.[0].trimEnd()
   return {
     left: text.slice(0, match.index),
-    phrase: match[0],
-    right: text.slice(match.index + match[0].length),
+    phrase: tail ? match[0] + tail : match[0],
+    right: tail ? '' : right,
   }
 }
 

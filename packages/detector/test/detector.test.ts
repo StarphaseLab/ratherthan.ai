@@ -105,6 +105,33 @@ describe('splitByVariant', () => {
     })
   })
 
+  /* Every rendering surface — the stage, the hall, the minted postcard —
+     splits through here, so the closing full stop must not become an orphan
+     fragment on any of them. */
+  it('takes the closing punctuation with a phrase that ends the sentence', () => {
+    expect(
+      splitByVariant("The card would be a verdict wearing a ground's clothes.", 'wearing_clothes'),
+    ).toEqual({
+      left: 'The card would be a verdict ',
+      phrase: "wearing a ground's clothes.",
+      right: '',
+    })
+  })
+
+  it('leaves a mid-sentence phrase alone', () => {
+    expect(splitByVariant('a move dressed as an appeal.', 'dressed_as')).toEqual({
+      left: 'a move ',
+      phrase: 'dressed as',
+      right: ' an appeal.',
+    })
+  })
+
+  it('absorbs a closing quote and stop together', () => {
+    const parts = splitByVariant('It was a rewrite in a refactor’s clothing.”', 'wearing_clothes')
+    expect(parts?.phrase).toBe('in a refactor’s clothing.”')
+    expect(parts?.right).toBe('')
+  })
+
   it('anchors on the first occurrence when the phrase repeats', () => {
     const parts = splitByVariant('fix it rather than patch rather than ignore', 'rather_than')
     expect(parts?.left).toBe('fix it ')

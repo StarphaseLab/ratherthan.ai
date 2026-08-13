@@ -1,7 +1,7 @@
 <script lang="ts">
 import { splitByVariant, VARIANTS, type VariantId } from '@ratherthan/detector'
 import type { PendingVariant } from '$lib/proposed.ts'
-import { pickSizes, SIZES, sideShare } from '$lib/stage-fit.ts'
+import { isLongAnchor, pickSizes, SIZES, sideShare } from '$lib/stage-fit.ts'
 
 /* PendingVariant, not VariantId: the admin preview stages proposals too.
    splitByVariant guards unknown ids itself (!meta → null), so an unnamed
@@ -47,7 +47,7 @@ $effect(() => {
     </div>
   </div>
   <div class="side {fit.left}">{split.left}</div>
-  <div class="phrase" bind:this={phraseEl}>{split.phrase}</div>
+  <div class="phrase" class:long={isLongAnchor(split.phrase)} bind:this={phraseEl}>{split.phrase}</div>
   <div class="side {fit.right}">{split.right}</div>
 </div>
 
@@ -84,6 +84,12 @@ $effect(() => {
     font-weight: 700;
     font-size: clamp(1.8rem, 5vw, 3.2rem);
     white-space: nowrap;
+  }
+  /* A span too long for one line at anchor size (see anchorSize). */
+  .phrase.long {
+    font-size: clamp(1.1rem, 3.2vw, 2rem);
+    white-space: normal;
+    text-wrap: balance;
   }
   /* The measuring twin: both fragments at all three sizes, invisible and
      out of flow at the stage's own width so wrapping matches exactly. */

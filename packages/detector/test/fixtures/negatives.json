@@ -74,5 +74,21 @@
   {
     "name": "gated not another inside double quotes",
     "text": "The reviewer wrote \"a real fix — not another patch\" on the PR."
+  },
+  {
+    "name": "addressed as — the \\bdressed boundary must hold",
+    "text": "The reviewer addressed as many comments as time allowed."
+  },
+  {
+    "name": "wearing thin — no costume noun",
+    "text": "The retry loop is wearing thin after the third timeout."
+  },
+  {
+    "name": "literal clothing — a shop, not a verdict",
+    "text": "The fixture data lists a mannequin wearing a wool coat and boots."
+  },
+  {
+    "name": "literal uniform far from the verb",
+    "text": "He was wearing the same faded school jacket he had bought years earlier at a shop that also sold uniform trousers."
   }
 ]
