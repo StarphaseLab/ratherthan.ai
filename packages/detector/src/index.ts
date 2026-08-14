@@ -56,6 +56,14 @@ const MINIMIZERS = '(?:just|merely|simply)'
    ~9x faster on adversarial space runs. */
 const GARMENT_GAP = "(?=\\S)[\\w'’ -]{1,30}?"
 
+/* The disguise verb, hoisted because it is spelled in two places that must
+   agree: the detection pattern and the display anchor. If detection ever
+   learns "worn" and the anchor doesn't, the anchor silently misses and the
+   whole costume span goes green again — the exact rendering the anchor
+   exists to prevent, and no test would fail, because falling back to the
+   full span is legitimate for the verbless form. */
+const WEAR_VERB = '\\bwear(?:ing|s)\\b'
+
 /* The postfix-dismissal gate: bare "not just" / "not another" saturate
    innocent English, so they only count when a dash or comma sets them off.
    One shared wrapper keeps the accepted gate punctuation byte-identical across
@@ -86,10 +94,16 @@ export function isNearMiss(text: string): boolean {
  * Patterns are stored without flags; consumers derive fresh regexes from
  * `pattern.source`, so the stateful `g` flag never leaks between uses.
  * `forms` lists every surface form a pattern accepts, canonical (label) first.
+ *
+ * `anchor` is optional and display-only: the part of a matched span the stage
+ * sets in green. Most variants are their own anchor — "rather than" is both
+ * what we detect and what we highlight. A variant whose match swallows the
+ * payoff needs the distinction, or the stage has nothing left to put on the
+ * closing line. Detection never reads it.
  */
 export const VARIANTS: Record<
   VariantId,
-  { label: string; family: Family; pattern: RegExp; forms: readonly string[] }
+  { label: string; family: Family; pattern: RegExp; anchor?: RegExp; forms: readonly string[] }
 > = {
   rather_than: {
     label: 'rather than',
@@ -148,10 +162,14 @@ export const VARIANTS: Record<
        own id, because the picker lists forms and a variant with no attested
        specimen is inventory the museum has not been offered yet. */
     pattern: new RegExp(
-      `\\bwear(?:ing|s)\\s+${GARMENT_GAP}(?:clothes|clothing|costume|uniform)\\b` +
+      `${WEAR_VERB}\\s+${GARMENT_GAP}(?:clothes|clothing|costume|uniform)\\b` +
         `|\\bin\\s+${GARMENT_GAP}['’]s\\s+clothing\\b`,
       'i',
     ),
+    /* Green on the verb alone, so the costume falls to the closing line where
+       the reveal belongs: the full span left these specimens with an empty
+       third line, which the wall showed and the ticket could not. */
+    anchor: new RegExp(WEAR_VERB, 'i'),
     forms: ['wearing X’s clothes', 'wearing an X costume', 'in X’s clothing'],
   },
   dressed_as: {
@@ -268,15 +286,19 @@ const CLOSING_TAIL = /^[.,;:!?…”"'’)\]]+\s*$/
 
 /**
  * Split a text around its variant phrase for display (anchored-keyword
- * rendering). Returns null when the phrase is absent so callers can fall
- * back to plain text.
+ * rendering). Returns null when the variant's phrase is absent, so callers
+ * can fall back to plain text.
  *
- * A phrase that ends the sentence takes its closing punctuation with it: a
+ * `phrase` here is what the stage sets in green, which is the whole detected
+ * span unless the variant names an `anchor` inside it — so it can be a strict
+ * substring of `Match.phrase`, which is always the full span. Display and
+ * detection answer different questions about the same sentence.
+ *
+ * An anchor that ends the sentence takes its closing punctuation with it: a
  * lone "." centred beneath the anchor, or floated off the end of a minted
- * card, reads as a typo rather than as the sentence's full stop. The disguise
- * family made this ordinary — "a verdict wearing a ground's clothes." ends on
- * the costume — but it is a property of any specimen whose phrase comes last,
- * and every surface that renders a split inherits the fix here.
+ * card, reads as a typo rather than as the sentence's full stop. True of any
+ * specimen whose anchor comes last — "It never says what it would do instead
+ * of." — and every surface that renders a split inherits it here.
  */
 export function splitByVariant(
   text: string,
@@ -286,11 +308,16 @@ export function splitByVariant(
   if (!meta) return null
   const match = new RegExp(meta.pattern.source, 'i').exec(text)
   if (!match) return null
-  const right = text.slice(match.index + match[0].length)
+  /* Searched inside the span, so an earlier "wearing" in the setup can never
+     steal the anchor from the one this specimen matched on. */
+  const inner = meta.anchor ? new RegExp(meta.anchor.source, 'i').exec(match[0]) : null
+  const anchored = inner?.[0] ?? match[0]
+  const start = match.index + (inner?.index ?? 0)
+  const right = text.slice(start + anchored.length)
   const tail = CLOSING_TAIL.exec(right)?.[0].trimEnd()
   return {
-    left: text.slice(0, match.index),
-    phrase: tail ? match[0] + tail : match[0],
+    left: text.slice(0, start),
+    phrase: tail ? anchored + tail : anchored,
     right: tail ? '' : right,
   }
 }

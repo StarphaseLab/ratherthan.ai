@@ -13,13 +13,11 @@
 
 export const SIZES = ['', 'compact', 'dense'] as const
 
-/* Every phrase the museum held before the disguise family fit the anchor at
-   full size: "rather than" is 11 characters, the longest label 14. Past this
-   many, a span needs more width than a phone has — "wearing a ground's
-   clothes." wants ~467px at the full clamp on a 360px screen — and the
-   anchor's own overflow would cut it. Measured per side elsewhere in this
-   module; a character count is enough here because the anchor is one line of
-   a known monospace face, and the step is a single threshold, not a ladder. */
+/* Every named phrase fits the anchor at full size. This guards the one span
+   that isn't a named phrase: a match with no anchor inside it, like the
+   verbless "in X's clothing", which at the full clamp overflows a phone and
+   would be cut by the anchor's own overflow. No specimen on the wall uses
+   that form yet; the picker offers it. */
 const ANCHOR_ONE_LINE_CHARS = 16
 
 /** Whether a phrase must step its type down to fit the anchor (see above). */

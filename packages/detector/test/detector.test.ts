@@ -105,15 +105,45 @@ describe('splitByVariant', () => {
     })
   })
 
-  /* Every rendering surface — the stage, the hall, the minted postcard —
-     splits through here, so the closing full stop must not become an orphan
-     fragment on any of them. */
-  it('takes the closing punctuation with a phrase that ends the sentence', () => {
+  /* Green on the verb, costume on the closing line: the museum's grammar is
+     setup / anchor / payoff, and a specimen whose match swallows the payoff
+     would leave the third line empty. */
+  it('anchors on the verb and leaves the costume as the payoff', () => {
     expect(
       splitByVariant("The card would be a verdict wearing a ground's clothes.", 'wearing_clothes'),
     ).toEqual({
       left: 'The card would be a verdict ',
-      phrase: "wearing a ground's clothes.",
+      phrase: 'wearing',
+      right: " a ground's clothes.",
+    })
+  })
+
+  it('falls back to the whole span when the anchor is absent from it', () => {
+    expect(
+      splitByVariant("a rewrite in a refactor's clothing that nobody asked for", 'wearing_clothes'),
+    ).toEqual({
+      left: 'a rewrite ',
+      phrase: "in a refactor's clothing",
+      right: ' that nobody asked for',
+    })
+  })
+
+  it('anchors on the verb this specimen matched, not an earlier mention', () => {
+    const parts = splitByVariant(
+      'The reviewer kept wearing me down; the fix was a rollback wearing a repair’s clothes.',
+      'wearing_clothes',
+    )
+    expect(parts?.left).toBe('The reviewer kept wearing me down; the fix was a rollback ')
+    expect(parts?.phrase).toBe('wearing')
+  })
+
+  /* Every rendering surface — the stage, the hall, the minted postcard —
+     splits through here, so the closing full stop must not become an orphan
+     fragment on any of them. */
+  it('takes the closing punctuation with a phrase that ends the sentence', () => {
+    expect(splitByVariant('It never says what it would do instead of.', 'instead_of')).toEqual({
+      left: 'It never says what it would do ',
+      phrase: 'instead of.',
       right: '',
     })
   })

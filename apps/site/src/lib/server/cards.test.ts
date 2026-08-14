@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { CARD_STYLE_VERSION } from '$lib/card-style.ts'
 import { deleteCard, putCard } from './cards.ts'
 
 const PNG = Uint8Array.from([0x89, 0x50, 0x4e, 0x47]).buffer
@@ -42,7 +43,8 @@ describe('putCard', () => {
     expect(prepare).toHaveBeenCalledWith(
       expect.stringContaining("strftime('%Y-%m-%dT%H:%M:%fZ', 'now')"),
     )
-    expect(bind).toHaveBeenCalledWith(PNG, 1, key, 'specimen')
+    /* The constant, not its value — a style bump re-mints, it doesn't fail. */
+    expect(bind).toHaveBeenCalledWith(PNG, CARD_STYLE_VERSION, key, 'specimen')
     expect(run).toHaveBeenCalledOnce()
   })
 
