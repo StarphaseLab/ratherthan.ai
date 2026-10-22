@@ -1,3 +1,13 @@
 packages:
   - packages/*
   - apps/*
+
+useNodeVersion: 22.23.4
+
+# Security floors for transitive deps whose parents still pin vulnerable
+# versions. Drop each once the parent ships the fix on its own.
+overrides:
+  undici@7: ^7.29.1 # miniflare pins 7.28.0
+  sharp: ^0.35.5 # miniflare pins 0.35.2 (libvips/libheif/librsvg CVEs)
+  devalue@5: ^5.9.3 # kit and svelte still allow 5.8.x
+  cookie@0: ^0.7.0 # kit 2.x pins ^0.6.0
